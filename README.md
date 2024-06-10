@@ -1,13 +1,27 @@
-# Sample Hardhat Project
+# Certify - hardhat
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+## Quick start 🏄
 
-Try running some of the following tasks:
+Prerequisites: [Bun (v1.1.11)](https://bun.sh) and [Git](https://git-scm.com/downloads)
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
+> Clone the repository:
+
 ```
+git clone https://github.com/salviega/certify-hardhat.git
+```
+
+> Install dependencies:
+
+```
+bun install
+```
+
+> Run the project:
+
+```
+bun run test
+```
+
+## Authors 🏗
+
+[salviega](https://github.com/salviega)
