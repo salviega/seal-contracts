@@ -6,6 +6,7 @@ import path from 'path'
 import '@nomicfoundation/hardhat-ethers'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-verify'
+import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-deploy'
 
 const envFile =
