@@ -6,7 +6,7 @@
 # ==============================================
 # Dependencies
 # ==============================================
-/node_modules
+node_modules
 
 # ==============================================
 # Environment Variables
@@ -17,8 +17,8 @@
 # ==============================================
 # Hardhat files
 # ==============================================
-/artifacts
-/cache
+artifacts
+cache
 
 # ==============================================
 # Hardhat Ignition default folder for deployments against a local node
@@ -36,11 +36,11 @@ yarn.lock
 # ==============================================
 # solidity-coverage files
 # ==============================================
-/coverage
-/coverage.json
+coverage
+coverage.json
 
 # ==============================================
 # TypeChain files
 # ==============================================
-/typechain
-/typechain-types
+typechain
+typechain-types
