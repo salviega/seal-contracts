@@ -67,6 +67,9 @@ const config: HardhatUserConfig = {
 	etherscan: {
 		apiKey: ARBISCAN_API_KEY
 	},
+	sourcify: {
+		enabled: true
+	},
 	namedAccounts: {
 		deployer: {
 			default: 0
