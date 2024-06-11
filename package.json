@@ -9,7 +9,7 @@
 		"chain": "hardhat node",
 		"clean": "hardhat clean && rm -rf cache",
 		"compile": "hardhat compile",
-		"deploy": "hardhat deploy",
+		"deploy": "hardhat deploy --tags all --network localhost",
 		"deploy:arbitrumOne": "NODE_ENV=production hardhat deploy --tags all --network arbitrumOne",
 		"deploy:arbitrumSepolia": "NODE_ENV=testnet hardhat deploy --tags all --network arbitrumSepolia",
 		"format": "prettier --write \"./**/*.{js,ts}\"",
