@@ -45,6 +45,7 @@ const deployRegistry: DeployFunction = async function (
 	const implementationAddress: string =
 		await getImplementationAddress(proxyAddress)
 
+	log(`Regsitry transaction hash: ${proxyTransaction.hash}`)
 	log(`Registry implementation deployed at: ${implementationAddress}`)
 	log(`Registry proxy deployed at: ${proxyAddress}`)
 	log(`Registry proxy admin: ${proxyAdmin}`)

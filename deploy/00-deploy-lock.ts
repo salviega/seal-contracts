@@ -1,7 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { DeployFunction /* DeployResult */ } from 'hardhat-deploy/dist/types'
 
-import { networkConfig } from '../helper-hardhat-config.ts'
+import { verify } from '../helper-functions.ts'
+import { developmentChains, networkConfig } from '../helper-hardhat-config.ts'
 
 const deployLock: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
@@ -25,6 +26,10 @@ const deployLock: DeployFunction = async function (
 		log: true,
 		waitConfirmations: networkConfig[network.name].blockConfirmations || 1
 	})
+
+	if (!developmentChains.includes(network.name)) {
+		await verify('Lock', args)
+	}
 }
 
 export default deployLock
