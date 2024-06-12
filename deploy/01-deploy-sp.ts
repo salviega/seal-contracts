@@ -14,9 +14,8 @@ import { verify } from '../helpers/verify.ts'
 const deploySp: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
-	const { getNamedAccounts, deployments, network } = hre
+	const { deployments, network } = hre
 	const { log } = deployments
-	const { deployer } = await getNamedAccounts()
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const args: any[] = [1, 1]
