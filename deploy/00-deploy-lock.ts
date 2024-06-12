@@ -1,8 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { DeployFunction /* DeployResult */ } from 'hardhat-deploy/dist/types'
 
-import { verify } from '../helper-functions.ts'
 import { developmentChains, networkConfig } from '../helper-hardhat-config.ts'
+import { verify } from '../helpers/verify.ts'
 
 const deployLock: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment

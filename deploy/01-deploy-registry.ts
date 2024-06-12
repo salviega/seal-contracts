@@ -3,15 +3,13 @@ import { ethers, upgrades } from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { DeployFunction } from 'hardhat-deploy/dist/types'
 
-import {
-	saveUpgradeableContractDeploymentInfo,
-	verify
-} from '../helper-functions.ts'
 import { developmentChains } from '../helper-hardhat-config.ts'
 import {
 	getImplementationAddress,
 	getProxyAdmin
-} from '../utils/upgrades/get-implementation-address.ts'
+} from '../helpers/upgrades/get-implementation-address.ts'
+import { saveUpgradeableContractDeploymentInfo } from '../helpers/upgrades/save-upgradeable-contract-deployment-info.ts'
+import { verify } from '../helpers/verify.ts'
 
 const deployRegistry: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
@@ -20,7 +18,8 @@ const deployRegistry: DeployFunction = async function (
 	const { log } = deployments
 	const { deployer } = await getNamedAccounts()
 
-	const args: string[] = [deployer]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const args: any[] = [deployer]
 
 	log('-----------------------------------')
 	log('Deploying Registry...')
@@ -51,7 +50,7 @@ const deployRegistry: DeployFunction = async function (
 	log(`Registry proxy admin: ${proxyAdmin}`)
 
 	if (!developmentChains.includes(network.name)) {
-		await verify(proxyAddress, args)
+		await verify(proxyAddress, [])
 	}
 
 	await saveUpgradeableContractDeploymentInfo('Registry', proxy)

@@ -1,6 +1,5 @@
 import { Contract, ContractTransactionResponse, Network } from 'ethers'
 import fs from 'fs'
-import { run } from 'hardhat'
 import path from 'path'
 
 export async function saveUpgradeableContractDeploymentInfo(
@@ -8,6 +7,8 @@ export async function saveUpgradeableContractDeploymentInfo(
 	proxy: Contract
 ): Promise<void> {
 	const address: string = await proxy.getAddress()
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const abi: any = JSON.parse(proxy.interface.formatJson())
 	const bytecode: string | null = await proxy.getDeployedCode()
 
@@ -64,22 +65,5 @@ export async function saveUpgradeableContractDeploymentInfo(
 	const chainIdFile = path.join(networkDirectory, '..', '.chainId')
 	if (!fs.existsSync(chainIdFile)) {
 		fs.writeFileSync(chainIdFile, chainId)
-	}
-}
-
-export async function verify(
-	contractAddress: string,
-	args: any[]
-): Promise<void> {
-	console.log('Verifying contract...')
-	try {
-		await run('verify:verify', {
-			address: contractAddress,
-			constructorArguments: args
-		})
-	} catch (error: any) {
-		if (!error.message.toLowerCase().includes('already verified')) {
-			console.error(error)
-		}
 	}
 }

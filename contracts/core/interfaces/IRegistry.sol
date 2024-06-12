@@ -62,12 +62,12 @@ interface IRegistry {
 	/// ==== External/Public Functions =====
 	/// ====================================
 
-	function createProfile(
-		uint256 _nonce,
-		string memory _name,
-		address _owner,
-		address[] memory _members
-	) external returns (bytes32 profileId);
+	// function createProfile(
+	// 	uint256 _nonce,
+	// 	string memory _name,
+	// 	address _owner,
+	// 	address[] memory _members
+	// ) external returns (bytes32 profileId);
 
 	function updateProfileName(
 		bytes32 _profileId,
