@@ -139,6 +139,8 @@ contract Registry is
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
 		accountsAuthorizedToCreateProfile[_account] = _status;
+
+		emit AccountAuthorizedToCreateProfile(msg.sender, _account, _status);
 	}
 
 	// This function is called by the attestor contract

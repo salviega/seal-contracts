@@ -10,6 +10,12 @@ interface IRegistry {
 		address anchor;
 	}
 
+	event AccountAuthorizedToCreateProfile(
+		address indexed owner,
+		address indexed account,
+		bool authorized
+	);
+
 	event ProfileCreated(
 		bytes32 indexed profileId,
 		uint256 nonce,
