@@ -38,15 +38,16 @@ const deployRegistry: DeployFunction = async function (
 		throw new Error('No deployment transaction found')
 	}
 
+	log(`Regsitry transaction hash: ${proxyTransaction.hash}`)
+
 	const proxyAddress: string = await proxy.getAddress()
-	const proxyAdmin: string = await getProxyAdmin(proxyAddress)
+	log(`Registry proxy deployed at: ${proxyAddress}`)
 
 	const implementationAddress: string =
 		await getImplementationAddress(proxyAddress)
-
-	log(`Regsitry transaction hash: ${proxyTransaction.hash}`)
 	log(`Registry implementation deployed at: ${implementationAddress}`)
-	log(`Registry proxy deployed at: ${proxyAddress}`)
+
+	const proxyAdmin: string = await getProxyAdmin(proxyAddress)
 	log(`Registry proxy admin: ${proxyAdmin}`)
 
 	if (!developmentChains.includes(network.name)) {

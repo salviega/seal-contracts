@@ -38,7 +38,7 @@ const ACCOUNTS = [WALLET_PRIVATE_KEY]
 const SOLC_SETTING = {
 	optimizer: {
 		enabled: true,
-		runs: 200
+		runs: 50
 	}
 }
 

@@ -23,6 +23,7 @@
 		"./hardhat.config.ts",
 		"./scripts",
 		"./talks",
-		"./test"
+		"./test",
+		"deployments/01-deploy-registry.ts"
 	]
 }
