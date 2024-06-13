@@ -215,7 +215,6 @@ describe('Registry', function () {
 		})
 
 		describe('Profile Creation', () => {
-			// TODO: add test with gasless transaction
 			it('Should receive the right amount of ether in Registry contract', async () => {
 				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
 					await loadFixture(deployFixture)
@@ -291,6 +290,129 @@ describe('Registry', function () {
 					[ethKipu, registry],
 					[-resolverFeesETH, resolverFeesETH]
 				)
+			})
+			// TODO: add test with gasless transaction
+			it.skip('Should create a profile thoght gasless transaction', async () => {
+				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
+					await loadFixture(deployFixture)
+
+				await registry
+					.connect(certify)
+					.authorizeProfileCreation(certify.address, true)
+
+				const ethKipuNonce: number = await ethers.provider.getTransactionCount(
+					ethKipu.address
+				)
+
+				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
+					ethKipu.address,
+					32
+				)
+
+				const recipients: BytesLike[] = [ethKipuAddressBytes]
+
+				const attestation: Attestation = {
+					schemaId,
+					linkedAttestationId: 0,
+					attestTimestamp: 0,
+					revokeTimestamp: 0,
+					attester: ethKipu.address,
+					validUntil: 0,
+					dataLocation: DataLocation.ONCHAIN,
+					revoked: false,
+					recipients,
+					data: '0x'
+				}
+
+				const attestationArray: unknown[] = [
+					attestation.schemaId,
+					attestation.linkedAttestationId,
+					attestation.attestTimestamp,
+					attestation.revokeTimestamp,
+					attestation.attester,
+					attestation.validUntil,
+					attestation.dataLocation,
+					attestation.revoked,
+					attestation.recipients,
+					attestation.data
+				]
+
+				const resolverFeesETH: bigint = ethers.parseEther('1')
+				const indexingKey: string = 'Nothing'
+
+				const delegatedAttestHash: BytesLike = await sp
+					.connect(ethKipu)
+					.getDelegatedAttestHash(attestationArray)
+
+				const delegateSignature: BytesLike =
+					await ethKipu.signMessage(delegatedAttestHash)
+
+				const addressSigned: string = ethers.verifyMessage(
+					delegatedAttestHash,
+					delegateSignature
+				)
+
+				console.table({
+					signature: delegateSignature,
+					hash: delegatedAttestHash,
+					addressSigned,
+					signer: attestation.attester,
+					ethKipu: ethKipu.address
+				})
+
+				const ethKipuProfile: Profile = {
+					nonce: ethKipuNonce,
+					name: 'ETHKipu',
+					owner: ethKipu.address,
+					members: [tono.address, julio.address]
+				}
+
+				const ethKipuProfileArray: unknown[] = Object.values(ethKipuProfile)
+
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					ethKipuProfileArray
+				)
+
+				const attestTx = await sp
+					.connect(certify)
+					[
+						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+						value: resolverFeesETH
+					})
+
+				await attestTx.wait()
+
+				const { '0': attestationId } = await getEvetnArgs(
+					attestTx.hash,
+					sp,
+					'AttestationMade',
+					[0]
+				)
+
+				const attestationArrayObtained: any[] =
+					await sp.getAttestation(attestationId)
+
+				const attestationObtained: Attestation =
+					attestationContractToAttestation(attestationArrayObtained)
+
+				const { '0': profileId } = await getEvetnArgs(
+					attestTx.hash,
+					registry,
+					'ProfileCreated',
+					[0]
+				)
+
+				const profileArrayObtained: any[] =
+					await registry.getProfileById(profileId)
+
+				const profileObtained: Profile =
+					profileContractToProfile(profileArrayObtained)
+
+				expect(profileObtained.owner)
+					.to.equal(attestationObtained.attester)
+					.to.equal(ethKipu.address)
 			})
 			it('Should profile owner be the same as the attester', async () => {
 				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
