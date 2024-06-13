@@ -1,14 +1,22 @@
-import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
-import {
-	loadFixture,
-	time
-} from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
+import { AbiCoder, BytesLike } from 'ethers'
 import hre, { ethers, upgrades } from 'hardhat'
 
+import { CREATE_PROFILE_TYPES } from '../constants/constants'
+import { DataLocation } from '../constants/enums'
+import { getEvetnArgs } from '../helpers/get-events-args'
+import { attestationContractToAttestation } from '../mappings/attestation-contract-to-attestation.mapping'
+import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
+import { Attestation } from '../models/attestation.model'
+import { Profile } from '../models/profile.model'
+import { Schema } from '../models/schema.model'
+
 describe('Registry', function () {
+	const abiCoder: AbiCoder = new ethers.AbiCoder()
+
 	async function deployFixture() {
-		const [certify, ethKipu] = await hre.ethers.getSigners()
+		const [certify, ethKipu, tono, julio] = await hre.ethers.getSigners()
 
 		const SP = await hre.ethers.getContractFactory('SP')
 		const sp = await upgrades.deployProxy(SP, [1, 1])
@@ -16,7 +24,43 @@ describe('Registry', function () {
 		const Registry = await hre.ethers.getContractFactory('Registry')
 		const registry = await upgrades.deployProxy(Registry, [certify.address])
 
-		return { sp, registry, certify, ethKipu }
+		const clientSchema: Schema = {
+			registrant: ethKipu.address,
+			revocale: false,
+			dataLocation: DataLocation.ONCHAIN,
+			maxValidFor: 0,
+			hook: await registry.getAddress(),
+			timestamp: 0,
+			data: 'blah blah blah...'
+		}
+
+		const clientSchemaArray: unknown[] = Object.values(clientSchema)
+		const delegateSignature: BytesLike = '0x'
+
+		const registerTx = await sp
+			.connect(ethKipu)
+			.register(clientSchemaArray, delegateSignature)
+
+		await registerTx.wait()
+
+		const { '0': schemaId } = await getEvetnArgs(
+			registerTx.hash,
+			sp,
+			'SchemaRegistered',
+			[0]
+		)
+
+		const schemaIdNumber: number = Number(schemaId)
+
+		return {
+			sp,
+			registry,
+			certify,
+			ethKipu,
+			tono,
+			julio,
+			schemaId: schemaIdNumber
+		}
 	}
 
 	// describe('Deployment', function () {
@@ -52,7 +96,7 @@ describe('Registry', function () {
 
 	describe('Registrations', () => {
 		describe('Validations', () => {
-			it('Should revert if other account authorizes a new account to create a profile', async () => {
+			it('Should be reverted if another account authorizes an account to create a profile.', async () => {
 				const { registry, certify, ethKipu } = await loadFixture(deployFixture)
 
 				const account: string = ethKipu.address
@@ -67,10 +111,93 @@ describe('Registry', function () {
 					)
 					.withArgs(ethKipu.address, ethers.id('CERTIFY_OWNER'))
 			})
+			it('Should be reverted if an account creates a profile again without being authorized again.', async () => {
+				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
+					await loadFixture(deployFixture)
+
+				await registry
+					.connect(certify)
+					.authorizeProfileCreation(ethKipu.address, true)
+
+				const ethKipuNonce: number = await ethers.provider.getTransactionCount(
+					ethKipu.address
+				)
+
+				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
+					ethKipu.address,
+					32
+				)
+
+				const recipients: BytesLike[] = [ethKipuAddressBytes]
+
+				const attestation: Attestation = {
+					schemaId,
+					linkedAttestationId: 0,
+					attestTimestamp: 0,
+					revokeTimestamp: 0,
+					attester: ethKipu.address,
+					validUntil: 0,
+					dataLocation: DataLocation.ONCHAIN,
+					revoked: false,
+					recipients,
+					data: '0x'
+				}
+
+				const attestationArray: unknown[] = [
+					attestation.schemaId,
+					attestation.linkedAttestationId,
+					attestation.attestTimestamp,
+					attestation.revokeTimestamp,
+					attestation.attester,
+					attestation.validUntil,
+					attestation.dataLocation,
+					attestation.revoked,
+					attestation.recipients,
+					attestation.data
+				]
+
+				const resolverFeesETH: bigint = ethers.parseEther('1')
+				const indexingKey: string = 'Nothing'
+				const delegateSignature: BytesLike = '0x'
+
+				const ethKipuProfile: Profile = {
+					nonce: ethKipuNonce,
+					name: 'ETHKipu',
+					owner: ethKipu.address,
+					members: [tono.address, julio.address]
+				}
+
+				const ethKipuProfileArray: unknown[] = Object.values(ethKipuProfile)
+
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					ethKipuProfileArray
+				)
+
+				await sp
+					.connect(ethKipu)
+					[
+						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+						value: resolverFeesETH
+					})
+
+				await expect(
+					sp
+						.connect(ethKipu)
+						[
+							'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+						](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+							value: resolverFeesETH
+						})
+				)
+					.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+					.withArgs()
+			})
 		})
 
 		describe('Authorizations', () => {
-			it('Should authorize a new account to create a profile', async () => {
+			it('Should authorize an account to create a profile', async () => {
 				const { registry, certify, ethKipu } = await loadFixture(deployFixture)
 
 				const account: string = ethKipu.address
@@ -87,11 +214,183 @@ describe('Registry', function () {
 			})
 		})
 
-		// TODO: testing
 		describe('Profile Creation', () => {
-			it('Should revert if an unauthorized account tries to create a profile', async () => {
-				const { sp, registry, certify, ethKipu } =
+			it('Should receive the right amount of ether in Registry contract', async () => {
+				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
 					await loadFixture(deployFixture)
+
+				await registry
+					.connect(certify)
+					.authorizeProfileCreation(ethKipu.address, true)
+
+				const ethKipuNonce: number = await ethers.provider.getTransactionCount(
+					ethKipu.address
+				)
+
+				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
+					ethKipu.address,
+					32
+				)
+
+				const recipients: BytesLike[] = [ethKipuAddressBytes]
+
+				const attestation: Attestation = {
+					schemaId,
+					linkedAttestationId: 0,
+					attestTimestamp: 0,
+					revokeTimestamp: 0,
+					attester: ethKipu.address,
+					validUntil: 0,
+					dataLocation: DataLocation.ONCHAIN,
+					revoked: false,
+					recipients,
+					data: '0x'
+				}
+
+				const attestationArray: unknown[] = [
+					attestation.schemaId,
+					attestation.linkedAttestationId,
+					attestation.attestTimestamp,
+					attestation.revokeTimestamp,
+					attestation.attester,
+					attestation.validUntil,
+					attestation.dataLocation,
+					attestation.revoked,
+					attestation.recipients,
+					attestation.data
+				]
+
+				const resolverFeesETH: bigint = ethers.parseEther('1')
+				const indexingKey: string = 'Nothing'
+				const delegateSignature: BytesLike = '0x'
+
+				const ethKipuProfile: Profile = {
+					nonce: ethKipuNonce,
+					name: 'ETHKipu',
+					owner: ethKipu.address,
+					members: [tono.address, julio.address]
+				}
+
+				const ethKipuProfileArray: unknown[] = Object.values(ethKipuProfile)
+
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					ethKipuProfileArray
+				)
+
+				await expect(
+					sp
+						.connect(ethKipu)
+						[
+							'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+						](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+							value: resolverFeesETH
+						})
+				).to.changeEtherBalances(
+					[ethKipu, registry],
+					[-resolverFeesETH, resolverFeesETH]
+				)
+			})
+			it('Should profile owner be the same as the attester', async () => {
+				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
+					await loadFixture(deployFixture)
+
+				await registry
+					.connect(certify)
+					.authorizeProfileCreation(ethKipu.address, true)
+
+				const ethKipuNonce: number = await ethers.provider.getTransactionCount(
+					ethKipu.address
+				)
+
+				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
+					ethKipu.address,
+					32
+				)
+
+				const recipients: BytesLike[] = [ethKipuAddressBytes]
+
+				const attestation: Attestation = {
+					schemaId,
+					linkedAttestationId: 0,
+					attestTimestamp: 0,
+					revokeTimestamp: 0,
+					attester: ethKipu.address,
+					validUntil: 0,
+					dataLocation: DataLocation.ONCHAIN,
+					revoked: false,
+					recipients,
+					data: '0x'
+				}
+
+				const attestationArray: unknown[] = [
+					attestation.schemaId,
+					attestation.linkedAttestationId,
+					attestation.attestTimestamp,
+					attestation.revokeTimestamp,
+					attestation.attester,
+					attestation.validUntil,
+					attestation.dataLocation,
+					attestation.revoked,
+					attestation.recipients,
+					attestation.data
+				]
+
+				const resolverFeesETH: bigint = ethers.parseEther('1')
+				const indexingKey: string = 'Nothing'
+				const delegateSignature: BytesLike = '0x'
+
+				const ethKipuProfile: Profile = {
+					nonce: ethKipuNonce,
+					name: 'ETHKipu',
+					owner: ethKipu.address,
+					members: [tono.address, julio.address]
+				}
+
+				const ethKipuProfileArray: unknown[] = Object.values(ethKipuProfile)
+
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					ethKipuProfileArray
+				)
+
+				const attestTx = await sp
+					.connect(ethKipu)
+					[
+						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+						value: resolverFeesETH
+					})
+
+				await attestTx.wait()
+
+				const { '0': attestationId } = await getEvetnArgs(
+					attestTx.hash,
+					sp,
+					'AttestationMade',
+					[0]
+				)
+
+				const attestationArrayObtained: any[] =
+					await sp.getAttestation(attestationId)
+
+				const attestationObtained: Attestation =
+					attestationContractToAttestation(attestationArrayObtained)
+
+				const { '0': profileId } = await getEvetnArgs(
+					attestTx.hash,
+					registry,
+					'ProfileCreated',
+					[0]
+				)
+
+				const profileArrayObtained: any[] =
+					await registry.getProfileById(profileId)
+
+				const profileObtained: Profile =
+					profileContractToProfile(profileArrayObtained)
+
+				expect(profileObtained.owner).to.equal(attestationObtained.attester)
 			})
 		})
 
@@ -112,29 +411,6 @@ describe('Registry', function () {
 	})
 
 	// describe('Withdrawals', function () {
-	// 	describe('Validations', function () {
-	// 		it('Should revert with the right error if called too soon', async function () {
-	// 			const { lock } = await loadFixture(deployOneYearLockFixture)
-
-	// 			await expect(lock.withdraw()).to.be.revertedWith(
-	// 				"You can't withdraw yet"
-	// 			)
-	// 		})
-
-	// 		it('Should revert with the right error if called from another account', async function () {
-	// 			const { lock, unlockTime, otherAccount } = await loadFixture(
-	// 				deployOneYearLockFixture
-	// 			)
-
-	// 			// We can increase the time in Hardhat Network
-	// 			await time.increaseTo(unlockTime)
-
-	// 			// We use lock.connect() to send a transaction from another account
-	// 			await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-	// 				"You aren't the owner"
-	// 			)<<
-	// 		})
-
 	// 		it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
 	// 			const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture)
 

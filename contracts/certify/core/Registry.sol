@@ -10,6 +10,8 @@ import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
+import 'hardhat/console.sol';
+
 contract Registry is
 	Initializable,
 	IRegistry,
@@ -73,7 +75,7 @@ contract Registry is
 	function isAuthorizedToCreateProfile(
 		address _account
 	) external view returns (bool) {
-		return accountsAuthorizedToCreateProfile[_account];
+		return _isAuthorizedToCreateProfile(_account);
 	}
 
 	function isMemberOfProfile(
@@ -149,10 +151,8 @@ contract Registry is
 		address,
 		uint64,
 		uint64,
-		ERC20,
-		uint256,
 		bytes calldata extraData
-	) external {
+	) external payable {
 		(
 			uint256 nouce,
 			string memory name,
@@ -249,13 +249,15 @@ contract Registry is
 
 		profilesById[profileId] = profile;
 		anchorToProfileId[profile.anchor] = profileId;
-		accountsAuthorizedToCreateProfile[_owner] = false;
 
 		uint256 memberLength = _members.length;
+		bool isAuthorized = _isAuthorizedToCreateProfile(_owner);
 
-		if (memberLength > 0 && _owner != msg.sender) {
+		if (memberLength > 0 && !isAuthorized) {
 			revert UNAUTHORIZED();
 		}
+
+		accountsAuthorizedToCreateProfile[_owner] = false;
 
 		for (uint256 i; i < memberLength; ) {
 			address member = _members[i];
@@ -325,6 +327,12 @@ contract Registry is
 		address _owner
 	) internal pure returns (bytes32) {
 		return keccak256(abi.encodePacked(_nonce, _owner));
+	}
+
+	function _isAuthorizedToCreateProfile(
+		address _account
+	) internal view returns (bool) {
+		return accountsAuthorizedToCreateProfile[_account];
 	}
 
 	function _isMemberOfProfile(
