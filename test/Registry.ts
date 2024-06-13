@@ -215,6 +215,7 @@ describe('Registry', function () {
 		})
 
 		describe('Profile Creation', () => {
+			// TODO: add test with gasless transaction
 			it('Should receive the right amount of ether in Registry contract', async () => {
 				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
 					await loadFixture(deployFixture)
