@@ -61,7 +61,8 @@ contract Registry is
 		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
 
 		_grantRole(CERTIFY_OWNER, _owner);
-		attestationProtocol = _attestationProtocol;
+
+		_updateAttestationProtocol(_attestationProtocol);
 	}
 
 	/// =========================
@@ -158,31 +159,30 @@ contract Registry is
 	}
 
 	function createProfile(
+		uint64 _attestationId,
 		uint256 _nonce,
 		string memory _name,
 		address _owner,
 		address[] memory _members
 	) external onlyRole(CERTIFY_OWNER) {
 		accountAuthorizedToBeOwnerProfile[_owner] = true;
-		_createProfile(_nonce, _name, _owner, _members);
+		_createProfile(_attestationId, _nonce, _name, _owner, _members);
 	}
 
 	// This function is called by the attestor contract
 
 	function didReceiveAttestation(
-		address,
+		address _attester,
 		uint64,
-		uint64,
+		uint64 attestationId,
 		bytes calldata extraData
 	) external payable onlyAttesterProtocol {
-		(
-			uint256 nouce,
-			string memory name,
-			address owner,
-			address[] memory members
-		) = abi.decode(extraData, (uint256, string, address, address[]));
+		(uint256 nouce, string memory name, address[] memory members) = abi.decode(
+			extraData,
+			(uint256, string, address[])
+		);
 
-		_createProfile(nouce, name, owner, members);
+		_createProfile(attestationId, nouce, name, _attester, members);
 	}
 
 	function recoverFunds(
@@ -209,6 +209,13 @@ contract Registry is
 				++i;
 			}
 		}
+	}
+
+	function updateAttestationProtocol(
+		address _attestationProtocol
+	) external onlyRole(CERTIFY_OWNER) {
+		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
+		_updateAttestationProtocol(_attestationProtocol);
 	}
 
 	function updateProfileName(
@@ -249,6 +256,7 @@ contract Registry is
 	}
 
 	function _createProfile(
+		uint64 _attestationId,
 		uint256 _nonce,
 		string memory _name,
 		address _owner,
@@ -262,6 +270,7 @@ contract Registry is
 		if (_owner == address(0)) revert ZERO_ADDRESS();
 
 		Profile memory profile = Profile({
+			attestationId: _attestationId,
 			id: profileId,
 			nonce: _nonce,
 			name: _name,
@@ -293,6 +302,7 @@ contract Registry is
 		}
 
 		emit ProfileCreated(
+			profile.attestationId,
 			profileId,
 			profile.nonce,
 			profile.name,
@@ -369,5 +379,9 @@ contract Registry is
 		address _owner
 	) internal view returns (bool) {
 		return profilesById[_profileId].owner == _owner;
+	}
+
+	function _updateAttestationProtocol(address _attestationProtocol) internal {
+		attestationProtocol = _attestationProtocol;
 	}
 }

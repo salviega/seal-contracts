@@ -10,12 +10,12 @@ interface ICertify {
 	/// ======================
 
 	struct Course {
-		string name;
-		string symbol;
 		bytes32 profileId;
+		uint64 attestationId;
+		uint256 courseId;
 		ICourse course;
-		bytes32 managerRole;
 		bytes32 adminRole;
+		bytes32 managerRole;
 	}
 
 	/// ======================
@@ -24,20 +24,26 @@ interface ICertify {
 
 	event CourseCreated(
 		bytes32 indexed profileId,
+		uint64 indexed attestationId,
 		uint256 indexed courseId,
-		string name,
-		string symbol
+		address course,
+		bytes32 managerRole,
+		bytes32 adminRole
 	);
-
-	event CourseUpdated(address course);
-
-	event TreasuryUpdated(address treasury);
-
-	event PercentFeeUpdated(uint256 percentFee);
 
 	event BaseFeeUpdated(uint256 baseFee);
 
+	event CourseApproved(address course);
+
+	event CourseRemoved(address course);
+
+	event CourseUpdated(address course);
+
+	event PercentFeeUpdated(uint256 percentFee);
+
 	event RegistryUpdated(address registry);
+
+	event TreasuryUpdated(address treasury);
 
 	/// ====================================
 	/// ==== External/Public Functions =====
@@ -46,14 +52,13 @@ interface ICertify {
 	function initialize(
 		address _owner,
 		address _registry,
-		address _course,
 		address payable _treasury
 	) external;
 
 	function createCourse(
 		bytes32 _profileId,
-		string memory _name,
-		string memory _symbol,
+		uint64 _attestationId,
+		address _course,
 		address[] memory _managers
 	) external returns (uint256 courseId);
 

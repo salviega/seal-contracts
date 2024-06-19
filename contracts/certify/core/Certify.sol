@@ -28,7 +28,7 @@ contract Certify is
 	// === Storage Variables ====
 	// ==========================
 
-	mapping(address => bool) private cloneableStrategies;
+	mapping(address => bool) private cloneableCourses;
 	mapping(address => uint256) private nonces;
 	mapping(uint256 => Course) private courses;
 
@@ -55,6 +55,11 @@ contract Certify is
 		_;
 	}
 
+	modifier onlyAttesterProtocol() {
+		if (msg.sender != registry.getAttestationProtocol()) revert UNAUTHORIZED();
+		_;
+	}
+
 	// ====================================
 	// =========== Initializer ============
 	// ====================================
@@ -62,14 +67,12 @@ contract Certify is
 	function initialize(
 		address _owner,
 		address _registry,
-		address _course,
 		address payable _treasury
 	) external reinitializer(1) {
 		_initializeOwner(_owner);
 
 		_updateRegistry(_registry);
 
-		_updateCourse(_course);
 		// TODO: implement the following function
 		_updateBaseFee(0);
 		// TODO: implement the following function
@@ -98,6 +101,10 @@ contract Certify is
 		return treasury;
 	}
 
+	function isCloneableCourse(address _strategy) external view returns (bool) {
+		return _isCloneableCourse(_strategy);
+	}
+
 	function isCourseAdmin(
 		uint256 _courseId,
 		address _address
@@ -116,28 +123,65 @@ contract Certify is
 	//  ==== External/Public Functions =====
 	//  ====================================
 
+	function addToCloneableCourse(address _course) external onlyOwner {
+		if (_course == address(0)) revert ZERO_ADDRESS();
+
+		cloneableCourses[_course] = true;
+		emit CourseApproved(_course);
+	}
+
 	function addCourseManager(
 		uint256 _courseId,
 		address _manager
-	) external onlyCourseAdmin(_courseId) {
+	) external onlyOwner {
 		if (_manager == address(0)) revert ZERO_ADDRESS();
 		_grantRole(courses[_courseId].managerRole, _manager);
 	}
 
 	function createCourse(
 		bytes32 _profileId,
-		string memory _name,
-		string memory _symbol,
+		uint64 _attestationId,
+		address _course,
 		address[] memory _managers
-	) external returns (uint256 courseId) {
+	) external onlyOwner returns (uint256 courseId) {
+		if (!_isCloneableCourse(_course)) {
+			revert NOT_APPROVED_STRATEGY();
+		}
+
 		return
 			_createCourse(
-				_name,
-				_symbol,
 				_profileId,
+				msg.sender,
+				_attestationId,
 				ICourse(Clone.createClone(course, nonces[msg.sender]++)),
 				_managers
 			);
+	}
+
+	// This function is called by the attestor contract
+
+	function didReceiveAttestation(
+		address _attester,
+		uint64,
+		uint64 _attestationId,
+		bytes calldata extraData
+	) external payable onlyAttesterProtocol {
+		(bytes32 _profileId, address _course, address[] memory _managers) = abi
+			.decode(extraData, (bytes32, address, address[]));
+
+		_createCourse(
+			_profileId,
+			_attester,
+			_attestationId,
+			ICourse(_course),
+			_managers
+		);
+	}
+
+	function removeFromCloneableStrategies(address _course) external onlyOwner {
+		cloneableCourses[_course] = false;
+
+		emit CourseRemoved(_course);
 	}
 
 	function removeCourseManager(
@@ -181,8 +225,6 @@ contract Certify is
 	/// ======= Internal Functions =========
 	/// ====================================
 
-	/// @notice Internal function to check is caller is pool manager
-	/// @param _courseId The pool id
 	function _checkOnlyCourseManager(uint256 _courseId) internal view {
 		if (!_isCourseManager(_courseId, msg.sender)) revert UNAUTHORIZED();
 	}
@@ -194,13 +236,13 @@ contract Certify is
 	}
 
 	function _createCourse(
-		string memory _name,
-		string memory _symbol,
 		bytes32 _profileId,
+		address _attester,
+		uint64 _attestationId,
 		ICourse _course,
 		address[] memory _managers
 	) internal returns (uint256 courseId) {
-		if (!registry.isOwnerOrMemberOfProfile(_profileId, msg.sender))
+		if (!registry.isOwnerOrMemberOfProfile(_profileId, _attester))
 			revert UNAUTHORIZED();
 
 		courseId = ++courseIndex;
@@ -210,12 +252,12 @@ contract Certify is
 
 		// Create the Course instance
 		Course memory newCourse = Course({
-			name: _name,
-			symbol: _symbol,
-			course: _course,
+			attestationId: _attestationId,
 			profileId: _profileId,
-			managerRole: COURSE_MANAGER_ROLE,
-			adminRole: COURSE_ADMIN_ROLE
+			courseId: courseId,
+			course: _course,
+			adminRole: COURSE_ADMIN_ROLE,
+			managerRole: COURSE_MANAGER_ROLE
 		});
 
 		// Add the pool to the mapping of created courses
@@ -246,7 +288,18 @@ contract Certify is
 			}
 		}
 
-		emit CourseCreated(_profileId, courseId, _name, _symbol);
+		emit CourseCreated(
+			newCourse.profileId,
+			newCourse.attestationId,
+			courseId,
+			address(newCourse.course),
+			newCourse.managerRole,
+			newCourse.adminRole
+		);
+	}
+
+	function _isCloneableCourse(address _course) internal view returns (bool) {
+		return cloneableCourses[_course];
 	}
 
 	function _isCourseAdmin(

@@ -66,39 +66,8 @@ describe('Registry', function () {
 		}
 	}
 
-	// describe('Deployment', function () {
-	// 	it('Should set the right unlockTime', async function () {
-	// 		const { lock, unlockTime } = await loadFixture(deployFixture)
-
-	// 		expect(await lock.unlockTime()).to.equal(unlockTime)
-	// 	})
-
-	// 	it('Should set the right owner', async function () {
-	// 		const { lock, owner } = await loadFixture(deployOneYearLockFixture)
-
-	// 		expect(await lock.owner()).to.equal(owner.address)
-	// 	})
-
-	// 	it('Should receive and store the funds to lock', async function () {
-	// 		const { lock, lockedAmount } = await loadFixture(deployOneYearLockFixture)
-
-	// 		expect(await hre.ethers.provider.getBalance(lock.target)).to.equal(
-	// 			lockedAmount
-	// 		)
-	// 	})
-
-	// 	it('Should fail if the unlockTime is not in the future', async function () {
-	// 		// We don't use the fixture here because we want a different deployment
-	// 		const latestTime = await time.latest()
-	// 		const Lock = await hre.ethers.getContractFactory('Lock')
-	// 		await expect(Lock.deploy(latestTime, { value: 1 })).to.be.revertedWith(
-	// 			'Unlock time should be in the future'
-	// 		)
-	// 	})
-	// })
-
 	describe('Registrations', () => {
-		describe.skip('Validations', () => {
+		describe('Validations', () => {
 			it('Should be reverted if another account authorizes an account to create a profile.', async () => {
 				const { registry, certify, ethKipu } = await loadFixture(deployFixture)
 
@@ -166,7 +135,6 @@ describe('Registry', function () {
 				const ethKipuProfile: Profile = {
 					nonce: ethKipuNonce,
 					name: 'ETHKipu',
-					owner: ethKipu.address,
 					members: [tono.address, julio.address]
 				}
 
@@ -199,7 +167,7 @@ describe('Registry', function () {
 			})
 		})
 
-		describe.skip('Authorizations', () => {
+		describe('Authorizations', () => {
 			it('Should authorize an account to create a profile', async () => {
 				const { registry, certify, ethKipu } = await loadFixture(deployFixture)
 
@@ -218,7 +186,7 @@ describe('Registry', function () {
 		})
 
 		describe('Profile Creation', () => {
-			it.skip('Should receive the right amount of ether in Registry contract', async () => {
+			it('Should receive the right amount of ether in Registry contract', async () => {
 				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
 					await loadFixture(deployFixture)
 
@@ -270,7 +238,6 @@ describe('Registry', function () {
 				const ethKipuProfile: Profile = {
 					nonce: ethKipuNonce,
 					name: 'ETHKipu',
-					owner: ethKipu.address,
 					members: [tono.address, julio.address]
 				}
 
@@ -404,7 +371,7 @@ describe('Registry', function () {
 					.to.equal(attestationObtained.attester)
 					.to.equal(ethKipu.address)
 			})
-			it.skip('Should profile owner be the same as the attester', async () => {
+			it('Should profile owner be the same as the attester', async () => {
 				const { sp, registry, certify, ethKipu, tono, julio, schemaId } =
 					await loadFixture(deployFixture)
 
@@ -456,7 +423,6 @@ describe('Registry', function () {
 				const ethKipuProfile: Profile = {
 					nonce: ethKipuNonce,
 					name: 'ETHKipu',
-					owner: ethKipu.address,
 					members: [tono.address, julio.address]
 				}
 
@@ -490,11 +456,11 @@ describe('Registry', function () {
 				const attestationObtained: Attestation =
 					attestationContractToAttestation(attestationArrayObtained)
 
-				const { '0': profileId } = await getEvetnArgs(
+				const { '1': profileId } = await getEvetnArgs(
 					attestTx.hash,
 					registry,
 					'ProfileCreated',
-					[0]
+					[1]
 				)
 
 				const profileArrayObtained: any[] =
@@ -507,7 +473,7 @@ describe('Registry', function () {
 			})
 		})
 
-		describe.skip('Events', () => {
+		describe('Events', () => {
 			it('Should emit an event when a new account is authorized to create a profile', async () => {
 				const { registry, certify, ethKipu } = await loadFixture(deployFixture)
 
@@ -522,45 +488,4 @@ describe('Registry', function () {
 			})
 		})
 	})
-
-	// describe('Withdrawals', function () {
-	// 		it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-	// 			const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture)
-
-	// 			// Transactions are sent using the first signer by default
-	// 			await time.increaseTo(unlockTime)
-
-	// 			await expect(lock.withdraw()).not.to.be.reverted
-	// 		})
-	// 	})
-
-	// 	describe('Events', function () {
-	// 		it('Should emit an event on withdrawals', async function () {
-	// 			const { lock, unlockTime, lockedAmount } = await loadFixture(
-	// 				deployOneYearLockFixture
-	// 			)
-
-	// 			await time.increaseTo(unlockTime)
-
-	// 			await expect(lock.withdraw())
-	// 				.to.emit(lock, 'Withdrawal')
-	// 				.withArgs(lockedAmount, anyValue) // We accept any value as `when` arg
-	// 		})
-	// 	})
-
-	// 	describe('Transfers', function () {
-	// 		it('Should transfer the funds to the owner', async function () {
-	// 			const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-	// 				deployOneYearLockFixture
-	// 			)
-
-	// 			await time.increaseTo(unlockTime)
-
-	// 			await expect(lock.withdraw()).to.changeEtherBalances(
-	// 				[owner, lock],
-	// 				[lockedAmount, -lockedAmount]
-	// 			)
-	// 		})
-	// 	})
-	// })
 })

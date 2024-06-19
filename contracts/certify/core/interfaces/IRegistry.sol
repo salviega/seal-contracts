@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 interface IRegistry {
 	struct Profile {
+		uint64 attestationId;
 		bytes32 id;
 		uint256 nonce;
 		string name;
@@ -17,6 +18,7 @@ interface IRegistry {
 	);
 
 	event ProfileCreated(
+		uint64 indexed attestationId,
 		bytes32 indexed profileId,
 		uint256 nonce,
 		string name,
@@ -40,6 +42,8 @@ interface IRegistry {
 	/// =========================
 	/// ==== View Functions =====
 	/// =========================
+
+	function getAttestationProtocol() external view returns (address);
 
 	function getProfileById(
 		bytes32 _profileId
@@ -85,6 +89,8 @@ interface IRegistry {
 		bytes32 _profileId,
 		address[] memory _members
 	) external;
+
+	function updateAttestationProtocol(address _attestationProtocol) external;
 
 	function updateProfileName(
 		bytes32 _profileId,
