@@ -1,7 +1,7 @@
 import { Contract, ContractFactory, ContractTransactionResponse } from 'ethers'
 import { ethers, upgrades } from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { DeployFunction } from 'hardhat-deploy/dist/types'
+import { DeployFunction, Deployment } from 'hardhat-deploy/dist/types'
 
 import { developmentChains } from '../helper-hardhat-config.ts'
 import {
@@ -15,11 +15,13 @@ const deployRegistry: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
 	const { getNamedAccounts, deployments, network } = hre
-	const { log } = deployments
+	const { log, get } = deployments
 	const { deployer } = await getNamedAccounts()
 
+	const sp: Deployment = await get('SP')
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const args: any[] = [deployer]
+	const args: any[] = [deployer, sp.address]
 
 	log('-----------------------------------')
 	log('Deploying Registry...')

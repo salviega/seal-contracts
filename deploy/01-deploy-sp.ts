@@ -15,7 +15,7 @@ const deploySp: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
 	const { deployments, network } = hre
-	const { log } = deployments
+	const { log, save } = deployments
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const args: any[] = [1, 1]
@@ -52,6 +52,9 @@ const deploySp: DeployFunction = async function (
 	if (!developmentChains.includes(network.name)) {
 		await verify(proxyAddress, [])
 	}
+
+	const artifact = await deployments.getExtendedArtifact('SP')
+	await save('SP', { address: proxyAddress, ...artifact })
 
 	await saveUpgradeableContractDeploymentInfo('SP', proxy)
 }
