@@ -10,8 +10,6 @@ import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
-import 'hardhat/console.sol';
-
 contract Registry is
 	Initializable,
 	IRegistry,
@@ -24,40 +22,55 @@ contract Registry is
 	/// === Storage Variables ====
 	/// ==========================
 
+	mapping(address => bool) public accountAuthorizedToBeOwnerProfile;
 	mapping(address => bytes32) public anchorToProfileId;
 	mapping(bytes32 => Profile) public profilesById;
 	mapping(bytes32 => address) public profileIdToPendingOwner;
-	mapping(address => bool) public accountsAuthorizedToCreateProfile;
 
 	bytes32 public constant CERTIFY_OWNER = keccak256('CERTIFY_OWNER');
+	address public attestationProtocol;
 
 	/// ====================================
 	/// =========== Modifier ===============
 	/// ====================================
+
+	modifier onlyAccountAuthorizedToBeOwnerProfile(address _account) {
+		if (!accountAuthorizedToBeOwnerProfile[_account]) revert UNAUTHORIZED();
+		_;
+	}
+
+	modifier onlyAttesterProtocol() {
+		if (msg.sender != attestationProtocol) revert UNAUTHORIZED();
+		_;
+	}
 
 	modifier onlyProfileOwner(bytes32 _profileId) {
 		_checkOnlyProfileOwner(_profileId);
 		_;
 	}
 
-	modifier onlyAccountsAuthorizedToCreateProfile(address _account) {
-		if (!accountsAuthorizedToCreateProfile[_account]) revert UNAUTHORIZED();
-		_;
-	}
-
 	// ====================================
-	// =========== Initializer =============
+	// =========== Initializer ============
 	// ====================================
 
-	function initialize(address _owner) external reinitializer(1) {
+	function initialize(
+		address _owner,
+		address _attestationProtocol
+	) external reinitializer(1) {
 		if (_owner == address(0)) revert ZERO_ADDRESS();
+		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
 
 		_grantRole(CERTIFY_OWNER, _owner);
+		attestationProtocol = _attestationProtocol;
 	}
 
 	/// =========================
 	/// ==== View Functions =====
 	/// =========================
+
+	function getAttestationProtocol() external view returns (address) {
+		return attestationProtocol;
+	}
 
 	function getProfileByAnchor(
 		address _anchor
@@ -140,9 +153,18 @@ contract Registry is
 		address _account,
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
-		accountsAuthorizedToCreateProfile[_account] = _status;
-
+		accountAuthorizedToBeOwnerProfile[_account] = _status;
 		emit AccountAuthorizedToCreateProfile(msg.sender, _account, _status);
+	}
+
+	function createProfile(
+		uint256 _nonce,
+		string memory _name,
+		address _owner,
+		address[] memory _members
+	) external onlyRole(CERTIFY_OWNER) {
+		accountAuthorizedToBeOwnerProfile[_owner] = true;
+		_createProfile(_nonce, _name, _owner, _members);
 	}
 
 	// This function is called by the attestor contract
@@ -152,7 +174,7 @@ contract Registry is
 		uint64,
 		uint64,
 		bytes calldata extraData
-	) external payable {
+	) external payable onlyAttesterProtocol {
 		(
 			uint256 nouce,
 			string memory name,
@@ -231,7 +253,7 @@ contract Registry is
 		string memory _name,
 		address _owner,
 		address[] memory _members
-	) internal onlyAccountsAuthorizedToCreateProfile(_owner) returns (bytes32) {
+	) internal onlyAccountAuthorizedToBeOwnerProfile(_owner) returns (bytes32) {
 		bytes32 profileId = _generateProfileId(_nonce, _owner);
 
 		if (profilesById[profileId].anchor != address(0))
@@ -257,7 +279,7 @@ contract Registry is
 			revert UNAUTHORIZED();
 		}
 
-		accountsAuthorizedToCreateProfile[_owner] = false;
+		accountAuthorizedToBeOwnerProfile[_owner] = false;
 
 		for (uint256 i; i < memberLength; ) {
 			address member = _members[i];
@@ -332,7 +354,7 @@ contract Registry is
 	function _isAuthorizedToCreateProfile(
 		address _account
 	) internal view returns (bool) {
-		return accountsAuthorizedToCreateProfile[_account];
+		return accountAuthorizedToBeOwnerProfile[_account];
 	}
 
 	function _isMemberOfProfile(

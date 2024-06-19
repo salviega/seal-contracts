@@ -68,12 +68,23 @@ interface IRegistry {
 	/// ==== External/Public Functions =====
 	/// ====================================
 
-	// function createProfile(
-	// 	uint256 _nonce,
-	// 	string memory _name,
-	// 	address _owner,
-	// 	address[] memory _members
-	// ) external returns (bytes32 profileId);
+	function acceptProfileOwnership(bytes32 _profileId) external;
+
+	function addMembers(bytes32 _profileId, address[] memory _members) external;
+
+	function recoverFunds(address _token, address _recipient) external;
+
+	function didReceiveAttestation(
+		address,
+		uint64,
+		uint64,
+		bytes calldata extraData
+	) external payable;
+
+	function removeMembers(
+		bytes32 _profileId,
+		address[] memory _members
+	) external;
 
 	function updateProfileName(
 		bytes32 _profileId,
@@ -84,15 +95,4 @@ interface IRegistry {
 		bytes32 _profileId,
 		address _pendingOwner
 	) external;
-
-	function acceptProfileOwnership(bytes32 _profileId) external;
-
-	function addMembers(bytes32 _profileId, address[] memory _members) external;
-
-	function removeMembers(
-		bytes32 _profileId,
-		address[] memory _members
-	) external;
-
-	function recoverFunds(address _token, address _recipient) external;
 }
