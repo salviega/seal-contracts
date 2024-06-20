@@ -9,6 +9,7 @@ import '@nomicfoundation/hardhat-verify'
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-deploy'
 import 'hardhat-gas-reporter'
+import 'solidity-coverage'
 
 const envFile =
 	process.env.NODE_ENV === 'production' ? '.env.mainnet' : '.env.testnet'
