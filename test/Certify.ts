@@ -1,17 +1,21 @@
+import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import assert from 'assert'
 import { expect } from 'chai'
-import { AbiCoder, BytesLike } from 'ethers'
+import { AbiCoder, BytesLike, Contract, ZeroAddress } from 'ethers'
 import hre, { ethers, upgrades } from 'hardhat'
 
 import {
 	CREATE_COURSE_TYPES,
-	CREATE_PROFILE_TYPES
+	CREATE_PROFILE_TYPES,
+	EXTRA_DATA_TYPES
 } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { getEvetnArgs } from '../helpers/get-events-args'
 import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Course } from '../models/course.model'
+import { ExtraData } from '../models/extradata.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
@@ -171,6 +175,31 @@ describe('Certify', function () {
 			[0]
 		)
 
+		const participantSchema: Schema = {
+			registrant: ethKipu.address,
+			revocale: false,
+			dataLocation: DataLocation.ONCHAIN,
+			maxValidFor: 0,
+			hook: await certify.getAddress(),
+			timestamp: 0,
+			data: 'blah blah blah...'
+		}
+
+		const participantSchemaArray: unknown[] = Object.values(participantSchema)
+
+		const registerParticipantCourseTx = await sp
+			.connect(ethKipu)
+			.register(participantSchemaArray, delegateSignature)
+
+		await registerParticipantCourseTx.wait()
+
+		const { '0': participantSchemaId } = await getEvetnArgs(
+			registerCourseTx.hash,
+			sp,
+			'SchemaRegistered',
+			[0]
+		)
+
 		const course = await hre.ethers.deployContract('Course', [
 			'Genesis Course',
 			'GC',
@@ -194,6 +223,7 @@ describe('Certify', function () {
 			course,
 			ethKipuProfileId,
 			courseSchemaId,
+			participantSchemaId,
 			ethKipuAttestationId
 		}
 	}
@@ -204,8 +234,21 @@ describe('Certify', function () {
 		describe('Authorizations', () => {})
 
 		describe('Course Creation', () => {
-			it('Should create a course', async function () {
-				const {
+			let deployer,
+				ethKipu: SignerWithAddress,
+				tono: SignerWithAddress,
+				julio: SignerWithAddress,
+				sp: Contract,
+				registry: Contract,
+				certify: Contract,
+				course: Contract,
+				ethKipuProfileId: BytesLike,
+				courseSchemaId,
+				participantSchemaId: number,
+				ethKipuAttestationId: number
+
+			this.beforeAll(async function () {
+				;({
 					deployer,
 					ethKipu,
 					tono,
@@ -215,9 +258,10 @@ describe('Certify', function () {
 					certify,
 					course,
 					ethKipuProfileId,
+					participantSchemaId,
 					courseSchemaId,
 					ethKipuAttestationId
-				} = await loadFixture(deployFixture)
+				} = await loadFixture(deployFixture))
 
 				const courseAddress: string = await course.getAddress()
 
@@ -258,17 +302,20 @@ describe('Certify', function () {
 				const indexingKey: string = 'Nothing'
 				const delegateSignature: BytesLike = '0x'
 
-				const ethKipuCourse: Course = {
+				const extraDataObject: ExtraData = {
 					profileId: ethKipuProfileId,
 					course: courseAddress,
-					manangers: [tono.address, julio.address]
+					managers: [tono.address, julio.address],
+					isMint: false,
+					courseId: 0,
+					account: ZeroAddress
 				}
 
-				const ethKipuCourseArray: unknown[] = Object.values(ethKipuCourse)
+				const extraDataArray: unknown[] = Object.values(extraDataObject)
 
 				const extraData: BytesLike = abiCoder.encode(
-					CREATE_COURSE_TYPES,
-					ethKipuCourseArray
+					EXTRA_DATA_TYPES,
+					extraDataArray
 				)
 
 				const attestCourseTx = await sp
@@ -295,12 +342,95 @@ describe('Certify', function () {
 					[2]
 				)
 
-				const courseArrayObtained: any[] = await certify.getCourse(courseId)
+				this.courseId = courseId
+				this.courseAttestationId = courseAttestationId
+			})
+
+			it('Should create a course', async function () {
+				const courseArrayObtained: any[] = await certify.getCourse(
+					this.courseId
+				)
 
 				const courseObtained: Course =
 					courseContractToCourse(courseArrayObtained)
 
-				expect(courseObtained.attestationId).to.equal(courseAttestationId)
+				expect(courseObtained.attestationId).to.equal(this.courseAttestationId)
+			})
+
+			it('Should attest students', async function () {
+				const courseAddress: string = await course.getAddress()
+
+				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
+					ethKipu.address,
+					32
+				)
+
+				const recipients: BytesLike[] = [ethKipuAddressBytes]
+
+				const participantAttestation: Attestation = {
+					schemaId: participantSchemaId,
+					linkedAttestationId: ethKipuAttestationId,
+					attestTimestamp: 0,
+					revokeTimestamp: 0,
+					attester: ethKipu.address,
+					validUntil: 0,
+					dataLocation: DataLocation.ONCHAIN,
+					revoked: false,
+					recipients,
+					data: '0x'
+				}
+
+				const participantAttestationArray: unknown[] = [
+					participantAttestation.schemaId,
+					participantAttestation.linkedAttestationId,
+					participantAttestation.attestTimestamp,
+					participantAttestation.revokeTimestamp,
+					participantAttestation.attester,
+					participantAttestation.validUntil,
+					participantAttestation.dataLocation,
+					participantAttestation.revoked,
+					participantAttestation.recipients,
+					participantAttestation.data
+				]
+
+				const resolverFeesETH: bigint = ethers.parseEther('1')
+				const indexingKey: string = 'Nothing'
+				const delegateSignature: BytesLike = '0x'
+
+				const extraDataObject: ExtraData = {
+					profileId: ethKipuProfileId,
+					course: courseAddress,
+					managers: [tono.address, julio.address],
+					isMint: true,
+					courseId: this.courseId,
+					account: ZeroAddress
+				}
+
+				const extraDataArray: unknown[] = Object.values(extraDataObject)
+
+				const extraData: BytesLike = abiCoder.encode(
+					EXTRA_DATA_TYPES,
+					extraDataArray
+				)
+
+				const attestCourseTx = await sp
+					.connect(ethKipu)
+					[
+						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+					](participantAttestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+						value: resolverFeesETH
+					})
+
+				await attestCourseTx.wait()
+
+				const { '2': isAuthorized }: { '2': boolean } = await getEvetnArgs(
+					attestCourseTx.hash,
+					course,
+					'AuthorizedToMint',
+					[2]
+				)
+
+				assert(isAuthorized)
 			})
 		})
 

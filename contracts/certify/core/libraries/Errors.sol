@@ -54,7 +54,7 @@ contract Errors {
 	error INVALID_FEE();
 
 	/// ======================
-	/// ===== IStrategy ======
+	/// ===== ICourse ========
 	/// ======================
 
 	/// @notice Thrown when data is already intialized
@@ -63,14 +63,11 @@ contract Errors {
 	/// @notice Thrown when data is yet to be initialized
 	error NOT_INITIALIZED();
 
+	/// @notice Thrown when the address cannot mint.
+	error CANNOT_MINT();
+
 	/// @notice Thrown when an invalid address is used
 	error INVALID_ADDRESS();
-
-	/// @notice Thrown when a pool is inactive
-	error POOL_INACTIVE();
-
-	/// @notice Thrown when a pool is already active
-	error POOL_ACTIVE();
 
 	/// @notice Thrown when two arrays length are not equal
 	error ARRAY_MISMATCH();

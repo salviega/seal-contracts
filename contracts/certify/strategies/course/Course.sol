@@ -20,8 +20,14 @@ contract Course is
 	/// === Storage Variables ====
 	/// ==========================
 
+	mapping(address => bool) private canMint;
+
 	uint256 private tokenIdCounter;
-	IRegistry private registry;
+	IRegistry private _registry;
+
+	/// ====================================
+	/// ========== Modifier ================
+	/// ====================================
 
 	/// ====================================
 	/// ========== Constructor =============
@@ -40,16 +46,41 @@ contract Course is
 	function initialize(uint256 _courseId) public override onlyCertify {
 		__BaseStrategy_init(_courseId);
 
-		registry = certify.getRegistry();
+		_registry = certify.getRegistry();
 
 		emit Initialized(_courseId);
 	}
 
-	function safeMint(address to, string memory uri) public {
-		uint256 tokenId = tokenIdCounter++;
-		_safeMint(to, tokenId);
-		_setTokenURI(tokenId, uri);
+	//  ====================================
+	//  ==== External/Public Functions =====
+	//  ====================================
+
+	function authorizeToMint(address _account) external onlyCertify {
+		canMint[_account] = true;
+
+		emit AuthorizedToMint(msg.sender, _account, true);
 	}
+
+	function safeMint(
+		address _to,
+		string calldata _uri
+	) external onlyCertify returns (uint256) {
+		if (!canMint[_to]) revert CANNOT_MINT();
+
+		uint256 tokenId = tokenIdCounter++;
+		tokenIdCounter++;
+
+		_safeMint(_to, tokenId);
+		_setTokenURI(tokenId, _uri);
+
+		canMint[_to] = false;
+
+		return tokenId;
+	}
+
+	/// ====================================
+	/// ======= Internal Functions =========
+	/// ====================================
 
 	// The following functions are overrides required by Solidity.
 

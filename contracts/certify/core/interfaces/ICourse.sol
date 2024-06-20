@@ -31,6 +31,12 @@ interface ICourse {
 
 	event Registered(address indexed recipientId, bytes data, address sender);
 
+	event AuthorizedToMint(
+		address sender,
+		address indexed account,
+		bool authorized
+	);
+
 	event Allocated(
 		address indexed recipientId,
 		uint256 amount,
@@ -60,4 +66,8 @@ interface ICourse {
 	/// ======================
 
 	function initialize(uint256 courseId) external;
+
+	function authorizeToMint(address account) external;
+
+	function safeMint(address to, string calldata uri) external returns (uint256);
 }

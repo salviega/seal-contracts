@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
@@ -13,6 +14,7 @@ import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Metadata.sol';
 import './libraries/Transfer.sol';
+using ECDSA for bytes32;
 
 contract Certify is
 	ICertify,
@@ -57,6 +59,15 @@ contract Certify is
 
 	modifier onlyAttesterProtocol() {
 		if (msg.sender != registry.getAttestationProtocol()) revert UNAUTHORIZED();
+		_;
+	}
+
+	modifier verifySignature(
+		address _signer,
+		bytes32 _hash,
+		bytes memory _signature
+	) {
+		_checkSigner(_signer, _hash, _signature);
 		_;
 	}
 
@@ -166,16 +177,30 @@ contract Certify is
 		uint64 _attestationId,
 		bytes calldata extraData
 	) external payable onlyAttesterProtocol {
-		(bytes32 _profileId, address _course, address[] memory _managers) = abi
-			.decode(extraData, (bytes32, address, address[]));
+		(
+			bytes32 _profileId,
+			address _course,
+			address[] memory _managers,
+			bool isMint,
+			uint256 courseId,
+			address account
+		) = abi.decode(
+				extraData,
+				(bytes32, address, address[], bool, uint256, address)
+			);
 
-		_createCourse(
-			_profileId,
-			_attester,
-			_attestationId,
-			ICourse(_course),
-			_managers
-		);
+		if (isMint) {
+			if (_isCourseManager(courseId, _attester)) revert UNAUTHORIZED();
+			_authorizeToMint(courseId, account);
+		} else {
+			_createCourse(
+				_profileId,
+				_attester,
+				_attestationId,
+				ICourse(_course),
+				_managers
+			);
+		}
 	}
 
 	function removeFromCloneableStrategies(address _course) external onlyOwner {
@@ -221,18 +246,39 @@ contract Certify is
 
 	// TODO: implement the following function
 
+	function safeMint(
+		uint256 _courseId,
+		address _to,
+		bytes32 _hash,
+		bytes memory _signature,
+		string calldata _uri
+	) external verifySignature(_to, _hash, _signature) {
+		_safeMint(_courseId, _to, _uri);
+	}
+
 	/// ====================================
 	/// ======= Internal Functions =========
 	/// ====================================
+
+	function _authorizeToMint(uint256 _courseId, address _account) internal {
+		courses[_courseId].course.authorizeToMint(_account);
+	}
 
 	function _checkOnlyCourseManager(uint256 _courseId) internal view {
 		if (!_isCourseManager(_courseId, msg.sender)) revert UNAUTHORIZED();
 	}
 
-	/// @notice Internal function to check is caller is pool admin
-	/// @param _courseId The pool id
 	function _checkOnlyCourseAdmin(uint256 _courseId) internal view {
 		if (!_isCourseAdmin(_courseId, msg.sender)) revert UNAUTHORIZED();
+	}
+
+	function _checkSigner(
+		address _signer,
+		bytes32 _hash,
+		bytes memory _signature
+	) internal pure {
+		bool isSigner = _hash.recover(_signature) == _signer;
+		if (!isSigner) revert UNAUTHORIZED();
 	}
 
 	function _createCourse(
@@ -316,6 +362,14 @@ contract Certify is
 		return
 			hasRole(courses[_courseId].managerRole, _address) ||
 			_isCourseAdmin(_courseId, _address);
+	}
+
+	function _safeMint(
+		uint256 _courseId,
+		address _to,
+		string calldata _uri
+	) internal {
+		courses[_courseId].course.safeMint(_to, _uri);
 	}
 
 	function _updateCourse(address _course) internal {

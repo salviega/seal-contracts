@@ -70,16 +70,16 @@ abstract contract BaseCourse is ICourse, Transfer, Errors {
 	/// ======== Internal Functions ========
 	/// ====================================
 
-	function _checkOnlyCertify() internal view {
-		if (msg.sender != address(certify)) revert UNAUTHORIZED();
-	}
-
 	function _checkOnlyCourseManager(address _sender) internal view {
 		if (!certify.isCourseManager(courseId, _sender)) revert UNAUTHORIZED();
 	}
 
 	function _checkOnlyInitialized() internal view {
 		if (courseId == 0) revert NOT_INITIALIZED();
+	}
+
+	function _checkOnlyCertify() internal view {
+		if (msg.sender != address(certify)) revert UNAUTHORIZED();
 	}
 
 	/// ===================================
