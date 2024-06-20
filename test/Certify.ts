@@ -9,8 +9,7 @@ import {
 } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { getEvetnArgs } from '../helpers/get-events-args'
-import { attestationContractToAttestation } from '../mappings/attestation-contract-to-attestation.mapping'
-import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
+import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Course } from '../models/course.model'
 import { Profile } from '../models/profile.model'
@@ -296,14 +295,12 @@ describe('Certify', function () {
 					[2]
 				)
 
-				// const createCourseTx = await certify
-				// 	.connect(ethKipu)
-				// 	.createCourse(ethKipuProfileId, courseAddres, [
-				// 		tono.address,
-				// 		julio.address
-				// 	])
+				const courseArrayObtained: any[] = await certify.getCourse(courseId)
 
-				// await createCourseTx.wait()
+				const courseObtained: Course =
+					courseContractToCourse(courseArrayObtained)
+
+				expect(courseObtained.attestationId).to.equal(courseAttestationId)
 			})
 		})
 
