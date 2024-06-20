@@ -20,7 +20,7 @@ contract Course is
 	/// === Storage Variables ====
 	/// ==========================
 
-	mapping(address => bool) private canMint;
+	mapping(address => Status) private canMint;
 
 	uint256 private tokenIdCounter;
 	IRegistry private _registry;
@@ -56,16 +56,17 @@ contract Course is
 	//  ====================================
 
 	function authorizeToMint(address _account) external onlyCertify {
-		canMint[_account] = true;
+		if (canMint[_account] != Status.None) revert ALREADY_AUTHORIZED();
+		canMint[_account] = Status.Pending;
 
-		emit AuthorizedToMint(msg.sender, _account, true);
+		emit AuthorizedToMint(msg.sender, _account, canMint[_account]);
 	}
 
 	function safeMint(
 		address _to,
 		string calldata _uri
 	) external onlyCertify returns (uint256) {
-		if (!canMint[_to]) revert CANNOT_MINT();
+		if (canMint[_to] != Status.Pending) revert CANNOT_MINT();
 
 		uint256 tokenId = tokenIdCounter++;
 		tokenIdCounter++;
@@ -73,7 +74,7 @@ contract Course is
 		_safeMint(_to, tokenId);
 		_setTokenURI(tokenId, _uri);
 
-		canMint[_to] = false;
+		canMint[_to] = Status.Accepted;
 
 		return tokenId;
 	}

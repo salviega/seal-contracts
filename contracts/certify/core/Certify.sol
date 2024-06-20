@@ -261,6 +261,7 @@ contract Certify is
 	/// ====================================
 
 	function _authorizeToMint(uint256 _courseId, address _account) internal {
+		if (!_isCourseManager(_courseId, msg.sender)) revert UNAUTHORIZED();
 		courses[_courseId].course.authorizeToMint(_account);
 	}
 

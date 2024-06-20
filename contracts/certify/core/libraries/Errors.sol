@@ -63,6 +63,9 @@ contract Errors {
 	/// @notice Thrown when data is yet to be initialized
 	error NOT_INITIALIZED();
 
+	/// @notice Thrown when the sender is not authorized
+	error ALREADY_AUTHORIZED();
+
 	/// @notice Thrown when the address cannot mint.
 	error CANNOT_MINT();
 

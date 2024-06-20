@@ -11,11 +11,7 @@ interface ICourse {
 	enum Status {
 		None,
 		Pending,
-		Accepted,
-		Rejected,
-		Appealed,
-		InReview,
-		Canceled
+		Accepted
 	}
 
 	struct PayoutSummary {
@@ -34,7 +30,7 @@ interface ICourse {
 	event AuthorizedToMint(
 		address sender,
 		address indexed account,
-		bool authorized
+		Status status
 	);
 
 	event Allocated(
