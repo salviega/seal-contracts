@@ -9,6 +9,8 @@ import '../BaseCourse.sol';
 import '../../core/interfaces/ICertify.sol';
 import '../../core/interfaces/IRegistry.sol';
 
+import 'hardhat/console.sol';
+
 contract Course is
 	BaseCourse,
 	ERC721,
@@ -66,8 +68,8 @@ contract Course is
 	) external onlyCertify returns (uint256) {
 		if (canMint[_to] != Status.Pending) revert CANNOT_MINT();
 
-		uint256 tokenId = tokenIdCounter++;
 		tokenIdCounter++;
+		uint256 tokenId = tokenIdCounter++;
 
 		_safeMint(_to, tokenId);
 		_setTokenURI(tokenId, _uri);

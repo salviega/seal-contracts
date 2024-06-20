@@ -244,8 +244,6 @@ contract Certify is
 	// ======= Strategy Functions =========
 	// ====================================
 
-	// TODO: implement the following function
-
 	function safeMint(
 		uint256 _courseId,
 		address _to,

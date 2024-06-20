@@ -357,7 +357,7 @@ describe('Certify', function () {
 				expect(courseObtained.attestationId).to.equal(this.courseAttestationId)
 			})
 
-			it('Should attest students', async function () {
+			it('Should attest a student', async function () {
 				const courseAddress: string = await course.getAddress()
 
 				const ethKipuAddressBytes: BytesLike = ethers.zeroPadBytes(
@@ -403,7 +403,7 @@ describe('Certify', function () {
 					managers: [tono.address, julio.address],
 					isMint: true,
 					courseId: this.courseId,
-					account: ZeroAddress
+					account: ethKipu.address
 				}
 
 				const extraDataArray: unknown[] = Object.values(extraDataObject)
@@ -422,6 +422,28 @@ describe('Certify', function () {
 					})
 
 				await attestCourseTx.wait()
+			})
+			it('Should mint a certificate', async function () {
+				const message: string =
+					'you must sign this message in your wallet to verify that you are the owner of this account'
+				const hash: string = ethers.hashMessage(message)
+				const signature: string = await ethKipu.signMessage(message)
+				const signer: string = ethers.verifyMessage(message, signature)
+
+				const safeMintCertificateTx = await certify
+					.connect(ethKipu)
+					.safeMint(this.courseId, ethKipu.address, hash, signature, '')
+
+				await safeMintCertificateTx.wait()
+
+				const { '2': tokenId } = await getEvetnArgs(
+					safeMintCertificateTx.hash,
+					course,
+					'Transfer',
+					[2]
+				)
+
+				expect(tokenId).to.equal(1)
 			})
 		})
 
