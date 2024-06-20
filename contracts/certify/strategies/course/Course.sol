@@ -58,8 +58,6 @@ contract Course is
 	function authorizeToMint(address _account) external onlyCertify {
 		if (canMint[_account] != Status.None) revert ALREADY_AUTHORIZED();
 		canMint[_account] = Status.Pending;
-
-		emit AuthorizedToMint(msg.sender, _account, canMint[_account]);
 	}
 
 	function safeMint(

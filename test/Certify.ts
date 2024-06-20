@@ -422,15 +422,6 @@ describe('Certify', function () {
 					})
 
 				await attestCourseTx.wait()
-
-				const { '2': isAuthorized }: { '2': boolean } = await getEvetnArgs(
-					attestCourseTx.hash,
-					course,
-					'AuthorizedToMint',
-					[2]
-				)
-
-				assert(isAuthorized)
 			})
 		})
 

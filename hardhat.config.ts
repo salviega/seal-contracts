@@ -8,6 +8,7 @@ import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-verify'
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-deploy'
+import 'hardhat-gas-reporter'
 
 const envFile =
 	process.env.NODE_ENV === 'production' ? '.env.mainnet' : '.env.testnet'
@@ -18,8 +19,13 @@ if (fs.existsSync(path.resolve(__dirname, envFile))) {
 	dotenv.config()
 }
 
-const { ALCHEMY_ARBITRUM_HTTPS, ARBISCAN_API_KEY, WALLET_PRIVATE_KEY } =
-	process.env
+const {
+	ALCHEMY_ARBITRUM_HTTPS,
+	ARBISCAN_API_KEY,
+	COINMARKETCAP_API_KEY,
+	REPORT_GAS,
+	WALLET_PRIVATE_KEY
+} = process.env
 
 if (!ALCHEMY_ARBITRUM_HTTPS) {
 	throw new Error('ALCHEMY_ARBITRUM_HTTPS is not set')
@@ -27,6 +33,10 @@ if (!ALCHEMY_ARBITRUM_HTTPS) {
 
 if (!ARBISCAN_API_KEY) {
 	throw new Error('ARBISCAN_API_KEY is not set')
+}
+
+if (!COINMARKETCAP_API_KEY) {
+	throw new Error('COINMARKETCAP_API_KEY is not set')
 }
 
 if (!WALLET_PRIVATE_KEY) {
@@ -105,6 +115,14 @@ const config: HardhatUserConfig = {
 			}
 		]
 	},
+	gasReporter: {
+		enabled: !!REPORT_GAS,
+		coinmarketcap: COINMARKETCAP_API_KEY,
+		currency: 'USD',
+		L2: 'arbitrum',
+		outputFile: 'gas-report.txt'
+	},
+
 	mocha: {
 		timeout: 200000
 	}
