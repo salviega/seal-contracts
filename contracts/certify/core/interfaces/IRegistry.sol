@@ -12,14 +12,13 @@ interface IRegistry {
 	}
 
 	event AccountAuthorizedToCreateProfile(
-		address indexed owner,
 		address indexed account,
 		bool authorized
 	);
 
 	event ProfileCreated(
 		uint64 indexed attestationId,
-		bytes32 indexed profileId,
+		bytes32 indexed id,
 		uint256 nonce,
 		string name,
 		address owner,
@@ -68,9 +67,9 @@ interface IRegistry {
 		address _member
 	) external view returns (bool isMemberOfProfile);
 
-	/// ====================================
-	/// ==== External/Public Functions =====
-	/// ====================================
+	/// =================================
+	/// == External / Public Functions ==
+	/// =================================
 
 	function acceptProfileOwnership(bytes32 _profileId) external;
 

@@ -12,27 +12,44 @@ import './libraries/Transfer.sol';
 
 contract Registry is
 	Initializable,
-	IRegistry,
 	AccessControlUpgradeable,
-	Native,
 	Errors,
-	Transfer
+	Native,
+	Transfer,
+	IRegistry
 {
-	/// ==========================
-	/// === Storage Variables ====
-	/// ==========================
+	/// =========================
+	/// === Storage Variables ===
+	/// =========================
 
+	// TODO: I have those mappings names
 	mapping(address => bool) public accountAuthorizedToBeOwnerProfile;
 	mapping(address => bytes32) public anchorToProfileId;
-	mapping(bytes32 => Profile) public profilesById;
+	mapping(bytes32 => Profile) public profilesToId;
 	mapping(bytes32 => address) public profileIdToPendingOwner;
 
 	bytes32 public constant CERTIFY_OWNER = keccak256('CERTIFY_OWNER');
 	address public attestationProtocol;
 
-	/// ====================================
-	/// =========== Modifier ===============
-	/// ====================================
+	/// =========================
+	/// ====== Initializer ======
+	/// =========================
+
+	function initialize(
+		address _owner,
+		address _attestationProtocol
+	) external reinitializer(1) {
+		if (_owner == address(0)) revert ZERO_ADDRESS();
+		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
+
+		_updateAttestationProtocol(_attestationProtocol);
+
+		_grantRole(CERTIFY_OWNER, _owner);
+	}
+
+	/// =========================
+	/// ======= Modifiers =======
+	/// =========================
 
 	modifier onlyAccountAuthorizedToBeOwnerProfile(address _account) {
 		if (!accountAuthorizedToBeOwnerProfile[_account]) revert UNAUTHORIZED();
@@ -49,25 +66,9 @@ contract Registry is
 		_;
 	}
 
-	// ====================================
-	// =========== Initializer ============
-	// ====================================
-
-	function initialize(
-		address _owner,
-		address _attestationProtocol
-	) external reinitializer(1) {
-		if (_owner == address(0)) revert ZERO_ADDRESS();
-		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
-
-		_grantRole(CERTIFY_OWNER, _owner);
-
-		_updateAttestationProtocol(_attestationProtocol);
-	}
-
-	/// =========================
-	/// ==== View Functions =====
-	/// =========================
+	/// ==========================
+	/// ===== View Functions =====
+	/// ==========================
 
 	function getAttestationProtocol() external view returns (address) {
 		return attestationProtocol;
@@ -77,13 +78,13 @@ contract Registry is
 		address _anchor
 	) external view returns (Profile memory) {
 		bytes32 profileId = anchorToProfileId[_anchor];
-		return profilesById[profileId];
+		return profilesToId[profileId];
 	}
 
 	function getProfileById(
 		bytes32 _profileId
 	) external view returns (Profile memory) {
-		return profilesById[_profileId];
+		return profilesToId[_profileId];
 	}
 
 	function isAuthorizedToCreateProfile(
@@ -115,12 +116,12 @@ contract Registry is
 			_isMemberOfProfile(_profileId, _account);
 	}
 
-	/// ======================================
-	/// ==== External / Public Functions =====
-	/// ======================================
+	/// =================================
+	/// == External / Public Functions ==
+	/// =================================
 
 	function acceptProfileOwnership(bytes32 _profileId) external {
-		Profile storage profile = profilesById[_profileId];
+		Profile storage profile = profilesToId[_profileId];
 
 		address newOwner = profileIdToPendingOwner[_profileId];
 
@@ -155,7 +156,7 @@ contract Registry is
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
 		accountAuthorizedToBeOwnerProfile[_account] = _status;
-		emit AccountAuthorizedToCreateProfile(msg.sender, _account, _status);
+		emit AccountAuthorizedToCreateProfile(_account, _status);
 	}
 
 	function createProfile(
@@ -224,7 +225,7 @@ contract Registry is
 	) external onlyProfileOwner(_profileId) returns (address anchor) {
 		anchor = _generateAnchor(_profileId, _name);
 
-		Profile storage profile = profilesById[_profileId];
+		Profile storage profile = profilesToId[_profileId];
 
 		profile.name = _name;
 
@@ -247,9 +248,9 @@ contract Registry is
 		emit ProfilePendingOwnerUpdated(_profileId, _pendingOwner);
 	}
 
-	/// ====================================
-	/// ======== Internal Functions ========
-	/// ====================================
+	/// =========================
+	/// == Internal Functions ===
+	/// =========================
 
 	function _checkOnlyProfileOwner(bytes32 _profileId) internal view {
 		if (!_isOwnerOfProfile(_profileId, msg.sender)) revert UNAUTHORIZED();
@@ -264,7 +265,7 @@ contract Registry is
 	) internal onlyAccountAuthorizedToBeOwnerProfile(_owner) returns (bytes32) {
 		bytes32 profileId = _generateProfileId(_nonce, _owner);
 
-		if (profilesById[profileId].anchor != address(0))
+		if (profilesToId[profileId].anchor != address(0))
 			revert NONCE_NOT_AVAILABLE();
 
 		if (_owner == address(0)) revert ZERO_ADDRESS();
@@ -278,7 +279,7 @@ contract Registry is
 			anchor: _generateAnchor(profileId, _name)
 		});
 
-		profilesById[profileId] = profile;
+		profilesToId[profileId] = profile;
 		anchorToProfileId[profile.anchor] = profileId;
 
 		uint256 memberLength = _members.length;
@@ -303,7 +304,7 @@ contract Registry is
 
 		emit ProfileCreated(
 			profile.attestationId,
-			profileId,
+			profile.id,
 			profile.nonce,
 			profile.name,
 			profile.owner,
@@ -378,7 +379,7 @@ contract Registry is
 		bytes32 _profileId,
 		address _owner
 	) internal view returns (bool) {
-		return profilesById[_profileId].owner == _owner;
+		return profilesToId[_profileId].owner == _owner;
 	}
 
 	function _updateAttestationProtocol(address _attestationProtocol) internal {
