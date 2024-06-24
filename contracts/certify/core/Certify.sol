@@ -169,27 +169,36 @@ contract Certify is
 		bytes calldata extraData
 	) external payable onlyAttesterProtocol {
 		(
-			bytes32 _profileId,
+			bytes32 profileId,
 			address _course,
-			address[] memory _managers,
+			address[] memory managers,
 			bool isMint,
 			uint256 courseId,
-			address account
+			address[] memory recipients
 		) = abi.decode(
 				extraData,
-				(bytes32, address, address[], bool, uint256, address)
+				(bytes32, address, address[], bool, uint256, address[])
 			);
 
 		if (isMint) {
 			if (_isCourseManager(courseId, _attester)) revert UNAUTHORIZED();
-			_authorizeToMint(courseId, account);
+
+			if (recipients.length == 0) revert EMPTY_ARRAY();
+
+			for (uint256 i; i < recipients.length; ) {
+				_authorizeToMint(courseId, recipients[i]);
+
+				unchecked {
+					++i;
+				}
+			}
 		} else {
 			_createCourse(
-				_profileId,
+				profileId,
 				_attester,
 				_attestationId,
 				ICourse(_course),
-				_managers
+				managers
 			);
 		}
 	}

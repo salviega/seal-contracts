@@ -6,6 +6,9 @@ contract Errors {
 	/// ====== Generic =======
 	/// ======================
 
+	/// @notice Thrown when array length is zero
+	error EMPTY_ARRAY();
+
 	/// @notice Thrown as a general error when input / data is invalid
 	error INVALID();
 

@@ -8,5 +8,5 @@ export const EXTRA_DATA_TYPES: string[] = [
 	'address[]',
 	'bool',
 	'uint256',
-	'address'
+	'address[]'
 ]

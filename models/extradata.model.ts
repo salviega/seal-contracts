@@ -6,5 +6,5 @@ export interface ExtraData {
 	managers: string[]
 	isMint: boolean
 	courseId: number
-	account: string
+	recipients: string[]
 }

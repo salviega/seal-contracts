@@ -484,7 +484,7 @@ describe('Registry', function () {
 					registry.connect(certify).authorizeProfileCreation(account, status)
 				)
 					.to.emit(registry, 'AccountAuthorizedToCreateProfile')
-					.withArgs(certify.address, account, status)
+					.withArgs(account, status)
 			})
 		})
 	})

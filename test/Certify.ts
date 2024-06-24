@@ -308,7 +308,7 @@ describe('Certify', function () {
 					managers: [tono.address, julio.address],
 					isMint: false,
 					courseId: 0,
-					account: ZeroAddress
+					recipients: [ethKipu.address]
 				}
 
 				const extraDataArray: unknown[] = Object.values(extraDataObject)
@@ -403,7 +403,7 @@ describe('Certify', function () {
 					managers: [tono.address, julio.address],
 					isMint: true,
 					courseId: this.courseId,
-					account: ethKipu.address
+					recipients: [ethKipu.address]
 				}
 
 				const extraDataArray: unknown[] = Object.values(extraDataObject)
