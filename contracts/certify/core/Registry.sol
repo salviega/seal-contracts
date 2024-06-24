@@ -155,6 +155,7 @@ contract Registry is
 		address _account,
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
+		if (_account == address(0)) revert ZERO_ADDRESS();
 		accountAuthorizedToBeOwnerProfile[_account] = _status;
 		emit AccountAuthorizedToCreateProfile(_account, _status);
 	}

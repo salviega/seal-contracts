@@ -5,7 +5,6 @@ import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import 'solady/src/auth/Ownable.sol';
 import './interfaces/ICertify.sol';
 import './interfaces/ICourse.sol';
@@ -17,14 +16,13 @@ import './libraries/Transfer.sol';
 using ECDSA for bytes32;
 
 contract Certify is
-	ICertify,
-	Native,
-	Transfer,
-	Ownable,
 	Initializable,
 	AccessControlUpgradeable,
-	ReentrancyGuardUpgradeable,
-	Errors
+	Ownable,
+	Errors,
+	Native,
+	Transfer,
+	ICertify
 {
 	// ==========================
 	// === Storage Variables ====
@@ -37,15 +35,34 @@ contract Certify is
 	address private course;
 	address payable private treasury;
 
-	uint256 internal baseFee;
-	uint256 private percentFee;
 	uint256 private courseIndex;
 
 	IRegistry private registry;
 
+	/// =========================
+	/// ====== Initializer ======
+	/// =========================
+
+	function initialize(
+		address _owner,
+		address _registry,
+		address payable _treasury
+	) external reinitializer(1) {
+		_initializeOwner(_owner);
+
+		_updateRegistry(_registry);
+
+		_updateTreasury(_treasury);
+	}
+
 	// ====================================
 	// =========== Modifier ===============
 	// ====================================
+
+	modifier onlyAttesterProtocol() {
+		if (msg.sender != registry.getAttestationProtocol()) revert UNAUTHORIZED();
+		_;
+	}
 
 	modifier onlyCourseAdmin(uint256 courseId) {
 		_checkOnlyCourseAdmin(courseId);
@@ -54,11 +71,6 @@ contract Certify is
 
 	modifier onlyCourseManager(uint256 courseId) {
 		_checkOnlyCourseManager(courseId);
-		_;
-	}
-
-	modifier onlyAttesterProtocol() {
-		if (msg.sender != registry.getAttestationProtocol()) revert UNAUTHORIZED();
 		_;
 	}
 
@@ -71,37 +83,16 @@ contract Certify is
 		_;
 	}
 
-	// ====================================
-	// =========== Initializer ============
-	// ====================================
-
-	function initialize(
-		address _owner,
-		address _registry,
-		address payable _treasury
-	) external reinitializer(1) {
-		_initializeOwner(_owner);
-
-		_updateRegistry(_registry);
-
-		// TODO: implement the following function
-		_updateBaseFee(0);
-		// TODO: implement the following function
-		_updatePercentFee(0);
-
-		_updateTreasury(_treasury);
-	}
-
 	// =========================
 	// ==== View Functions =====
 	// =========================
 
-	function getAddress(uint256 _courseId) external view returns (address) {
-		return address(courses[_courseId].course);
-	}
-
 	function getCourse(uint256 _courseId) external view returns (Course memory) {
 		return courses[_courseId];
+	}
+
+	function getCourseAddress(uint256 _courseId) external view returns (address) {
+		return address(courses[_courseId].course);
 	}
 
 	function getRegistry() external view returns (IRegistry) {
@@ -130,9 +121,9 @@ contract Certify is
 		return _isCourseManager(_courseId, _address);
 	}
 
-	//  ====================================
-	//  ==== External/Public Functions =====
-	//  ====================================
+	/// =================================
+	/// == External / Public Functions ==
+	/// =================================
 
 	function addToCloneableCourse(address _course) external onlyOwner {
 		if (_course == address(0)) revert ZERO_ADDRESS();
@@ -222,14 +213,6 @@ contract Certify is
 			: ERC20Upgradeable(_token).balanceOf(address(this));
 
 		_transferAmount(_token, _recipient, amount);
-	}
-
-	function updateBaseFee(uint256 _baseFee) external onlyOwner {
-		_updateBaseFee(_baseFee);
-	}
-
-	function updatePercentFee(uint256 _percentFee) external onlyOwner {
-		_updatePercentFee(_percentFee);
 	}
 
 	function updateRegistry(address _registry) external onlyOwner {
@@ -390,19 +373,5 @@ contract Certify is
 
 		treasury = _treasury;
 		emit TreasuryUpdated(treasury);
-	}
-
-	function _updatePercentFee(uint256 _percentFee) internal {
-		if (_percentFee > 1e18) revert INVALID_FEE();
-
-		percentFee = _percentFee;
-
-		emit PercentFeeUpdated(percentFee);
-	}
-
-	function _updateBaseFee(uint256 _baseFee) internal {
-		baseFee = _baseFee;
-
-		emit BaseFeeUpdated(baseFee);
 	}
 }

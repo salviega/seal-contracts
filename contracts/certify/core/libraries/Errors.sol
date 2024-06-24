@@ -12,20 +12,11 @@ contract Errors {
 	/// @notice Thrown when mismatch in decoding data
 	error MISMATCH();
 
-	/// @notice Thrown when not enough funds are available
-	error NOT_ENOUGH_FUNDS();
-
 	/// @notice Thrown when user is not authorized
 	error UNAUTHORIZED();
 
 	/// @notice Thrown when address is the zero address
 	error ZERO_ADDRESS();
-
-	/// @notice Thrown when the function is not implemented
-	error NOT_IMPLEMENTED();
-
-	/// @notice Thrown when the value is non-zero
-	error NON_ZERO_VALUE();
 
 	/// ======================
 	/// ====== Registry ======
@@ -47,12 +38,6 @@ contract Errors {
 	/// @notice Thrown when the strategy is not approved
 	error NOT_APPROVED_STRATEGY();
 
-	/// @notice Thrown when the strategy is approved and should be cloned
-	error IS_APPROVED_STRATEGY();
-
-	/// @notice Thrown when the fee is below 1e18 which is the fee percentage denominator
-	error INVALID_FEE();
-
 	/// ======================
 	/// ===== ICourse ========
 	/// ======================
@@ -68,40 +53,4 @@ contract Errors {
 
 	/// @notice Thrown when the address cannot mint.
 	error CANNOT_MINT();
-
-	/// @notice Thrown when an invalid address is used
-	error INVALID_ADDRESS();
-
-	/// @notice Thrown when two arrays length are not equal
-	error ARRAY_MISMATCH();
-
-	/// @notice Thrown when the registration is invalid.
-	error INVALID_REGISTRATION();
-
-	/// @notice Thrown when the metadata is invalid.
-	error INVALID_METADATA();
-
-	/// @notice Thrown when the recipient is not accepted.
-	error RECIPIENT_NOT_ACCEPTED();
-
-	/// @notice Thrown when recipient is already accepted.
-	error RECIPIENT_ALREADY_ACCEPTED();
-
-	/// @notice Thrown when registration is not active.
-	error REGISTRATION_NOT_ACTIVE();
-
-	/// @notice Thrown when registration is active.
-	error REGISTRATION_ACTIVE();
-
-	/// @notice Thrown when there is an error in recipient.
-	error RECIPIENT_ERROR(address recipientId);
-
-	/// @notice Thrown when the allocation is not active.
-	error ALLOCATION_NOT_ACTIVE();
-
-	/// @notice Thrown when the allocation is not ended.
-	error ALLOCATION_NOT_ENDED();
-
-	/// @notice Thrown when the allocation is active.
-	error ALLOCATION_ACTIVE();
 }

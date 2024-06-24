@@ -1,7 +1,7 @@
 import { Contract, ContractFactory, ContractTransactionResponse } from 'ethers'
 import { ethers, upgrades } from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { DeployFunction } from 'hardhat-deploy/dist/types'
+import { DeployFunction, ExtendedArtifact } from 'hardhat-deploy/dist/types'
 
 import { developmentChains } from '../helper-hardhat-config.ts'
 import {
@@ -53,11 +53,11 @@ const deploySp: DeployFunction = async function (
 		await verify(proxyAddress, [])
 	}
 
-	const artifact = await deployments.getExtendedArtifact('SP')
+	const artifact: ExtendedArtifact = await deployments.getExtendedArtifact('SP')
 	await save('SP', { address: proxyAddress, ...artifact })
 
 	await saveUpgradeableContractDeploymentInfo('SP', proxy)
 }
 
-deploySp.tags = ['all', 'Sp']
+deploySp.tags = ['Sp']
 export default deploySp

@@ -2,6 +2,10 @@
 pragma solidity ^0.8.24;
 
 interface IRegistry {
+	/// ======================
+	/// ======= Structs ======
+	/// ======================
+
 	struct Profile {
 		uint64 attestationId;
 		bytes32 id;
@@ -10,6 +14,10 @@ interface IRegistry {
 		address owner;
 		address anchor;
 	}
+
+	/// ======================
+	/// ======= Events =======
+	/// ======================
 
 	event AccountAuthorizedToCreateProfile(
 		address indexed account,

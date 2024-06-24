@@ -1,6 +1,11 @@
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
+import { Contract } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { DeployFunction, Deployment } from 'hardhat-deploy/dist/types'
+import {
+	DeployFunction,
+	Deployment,
+	DeployResult
+} from 'hardhat-deploy/dist/types'
 
 import { developmentChains, networkConfig } from '../helper-hardhat-config'
 import { verify } from '../helpers/verify'
@@ -16,12 +21,12 @@ const deployCourse: DeployFunction = async function (
 	const certifyDeployment: Deployment = await get('Certify')
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const args: any[] = ['', '', certifyDeployment.address]
+	const args: any[] = ['xxx', 'xxx', certifyDeployment.address]
 
 	log('-----------------------------------')
 	log('Deploying Course...')
 
-	const courseDeployment = await deploy('Course', {
+	const courseDeployment: DeployResult = await deploy('Course', {
 		from: deployer,
 		args,
 		log: true,
@@ -29,15 +34,16 @@ const deployCourse: DeployFunction = async function (
 	})
 
 	if (!developmentChains.includes(network.name)) {
-		await verify('Course', args)
+		await verify(courseDeployment.address, args)
 	}
 
-	const certify = await ethers.getContractAt(
+	const certify: Contract = await ethers.getContractAt(
 		'Certify',
 		certifyDeployment.address,
 		deployerSigner
 	)
 
+	log('Adding Course to cloneable courses...')
 	await certify.addToCloneableCourse(courseDeployment.address)
 }
 

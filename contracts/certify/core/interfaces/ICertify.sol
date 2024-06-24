@@ -31,23 +31,41 @@ interface ICertify {
 		bytes32 adminRole
 	);
 
-	event BaseFeeUpdated(uint256 baseFee);
-
 	event CourseApproved(address course);
 
 	event CourseRemoved(address course);
 
 	event CourseUpdated(address course);
 
-	event PercentFeeUpdated(uint256 percentFee);
-
 	event RegistryUpdated(address registry);
 
 	event TreasuryUpdated(address treasury);
 
-	/// ====================================
-	/// ==== External/Public Functions =====
-	/// ====================================
+	/// =========================
+	/// ==== View Functions =====
+	/// =========================
+
+	function getCourse(uint256 _courseId) external view returns (Course memory);
+
+	function getCourseAddress(uint256 _courseId) external view returns (address);
+
+	function getRegistry() external view returns (IRegistry);
+
+	function getTreasury() external view returns (address payable);
+
+	function isCourseAdmin(
+		uint256 _courseId,
+		address _address
+	) external view returns (bool);
+
+	function isCourseManager(
+		uint256 _courseId,
+		address _address
+	) external view returns (bool);
+
+	/// =================================
+	/// == External / Public Functions ==
+	/// =================================
 
 	function initialize(
 		address _owner,
@@ -68,33 +86,7 @@ interface ICertify {
 
 	function recoverFunds(address _token, address _recipient) external;
 
-	function updateBaseFee(uint256 _baseFee) external;
-
-	function updatePercentFee(uint256 _percentFee) external;
-
 	function updateRegistry(address _registry) external;
 
 	function updateTreasury(address payable _treasury) external;
-
-	/// =========================
-	/// ==== View Functions =====
-	/// =========================
-
-	function getAddress(uint256 _courseId) external view returns (address);
-
-	function getCourse(uint256 _courseId) external view returns (Course memory);
-
-	function getRegistry() external view returns (IRegistry);
-
-	function getTreasury() external view returns (address payable);
-
-	function isCourseAdmin(
-		uint256 _courseId,
-		address _address
-	) external view returns (bool);
-
-	function isCourseManager(
-		uint256 _courseId,
-		address _address
-	) external view returns (bool);
 }

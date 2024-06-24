@@ -1,7 +1,11 @@
 import { Contract, ContractFactory, ContractTransactionResponse } from 'ethers'
 import { ethers, upgrades } from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { DeployFunction, Deployment } from 'hardhat-deploy/dist/types'
+import {
+	DeployFunction,
+	Deployment,
+	ExtendedArtifact
+} from 'hardhat-deploy/dist/types'
 
 import { developmentChains } from '../helper-hardhat-config.ts'
 import {
@@ -56,7 +60,8 @@ const deployCertify: DeployFunction = async function (
 		await verify(proxyAddress, [])
 	}
 
-	const artifact = await deployments.getExtendedArtifact('Certify')
+	const artifact: ExtendedArtifact =
+		await deployments.getExtendedArtifact('Certify')
 	await save('Certify', { address: proxyAddress, ...artifact })
 
 	await saveUpgradeableContractDeploymentInfo('Certify', proxy)
