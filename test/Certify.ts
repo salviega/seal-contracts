@@ -404,6 +404,7 @@ describe('Certify', function () {
 					isMint: true,
 					courseId: this.courseId,
 					recipients: [
+						ethKipu.address,
 						'0x11c633F3875b63d371c1dfBB1555CCC5580244a6',
 						'0x1Df6d190e4b1D2Bb9fDC7aBCd1B2Bb900b85031B',
 						'0x395CF5CC9Eae9Ac0d51Dc527688fCab5d6f4c3EE',

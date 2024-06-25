@@ -4,10 +4,9 @@ export function courseContractToCourse(courseContract: any[]): Course {
 	const course: Course = {
 		profileId: courseContract[0],
 		attestationId: courseContract[1],
-		courseId: courseContract[2],
-		course: courseContract[3],
-		adminRole: courseContract[4],
-		managerRole: courseContract[5]
+		course: courseContract[2],
+		adminRole: courseContract[3],
+		managerRole: courseContract[4]
 	}
 
 	return course

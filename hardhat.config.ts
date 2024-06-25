@@ -120,7 +120,7 @@ const config: HardhatUserConfig = {
 		enabled: !!REPORT_GAS,
 		coinmarketcap: COINMARKETCAP_API_KEY,
 		currency: 'USD',
-		L2: 'base'
+		L2: 'arbitrum'
 		// outputFile: 'gas-report.txt'
 	},
 
