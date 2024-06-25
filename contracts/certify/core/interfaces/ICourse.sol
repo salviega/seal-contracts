@@ -44,21 +44,27 @@ interface ICourse {
 
 	event PoolActive(bool active);
 
-	/// ======================
-	/// ======= Views ========
-	/// ======================
+	/// =========================
+	/// ====== Initializer ======
+	/// =========================
+
+	function initialize(uint256 courseId) external;
+
+	/// =========================
+	/// ==== View Functions =====
+	/// =========================
 
 	function getCertify() external view returns (ICertify);
 
 	function getCourseId() external view returns (uint256);
 
-	/// ======================
-	/// ===== Functions ======
-	/// ======================
-
-	function initialize(uint256 courseId) external;
+	/// =================================
+	/// == External / Public Functions ==
+	/// =================================
 
 	function authorizeToMint(address account) external;
+
+	function recoverFunds(address token, address recipient) external;
 
 	function safeMint(address to, string calldata uri) external returns (uint256);
 }

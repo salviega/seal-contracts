@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
+import 'solady/src/tokens/ERC20.sol';
 import '../core/interfaces/ICourse.sol';
-import '../core/libraries/Transfer.sol';
 import '../core/libraries/Errors.sol';
+import '../core/libraries/Native.sol';
+import '../core/libraries/Transfer.sol';
 
-abstract contract BaseCourse is ICourse, Transfer, Errors {
+abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// ==========================
 	/// === Storage Variables ====
 	/// ==========================
@@ -19,11 +21,6 @@ abstract contract BaseCourse is ICourse, Transfer, Errors {
 
 	modifier onlyCertify() {
 		_checkOnlyCertify();
-		_;
-	}
-
-	modifier onlyCourseManager(address _sender) {
-		_checkOnlyCourseManager(_sender);
 		_;
 	}
 
@@ -66,13 +63,20 @@ abstract contract BaseCourse is ICourse, Transfer, Errors {
 		return courseId;
 	}
 
+	function recoverFunds(
+		address _token,
+		address _recipient
+	) external onlyCertify {
+		uint256 amount = _token == NATIVE
+			? address(this).balance
+			: ERC20(_token).balanceOf(address(this));
+
+		_transferAmount(_token, _recipient, amount);
+	}
+
 	/// ====================================
 	/// ======== Internal Functions ========
 	/// ====================================
-
-	function _checkOnlyCourseManager(address _sender) internal view {
-		if (!certify.isCourseManager(courseId, _sender)) revert UNAUTHORIZED();
-	}
 
 	function _checkOnlyInitialized() internal view {
 		if (courseId == 0) revert NOT_INITIALIZED();

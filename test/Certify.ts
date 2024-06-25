@@ -470,7 +470,7 @@ describe('Certify', function () {
 
 				const safeMintCertificateTx = await certify
 					.connect(ethKipu)
-					.safeMint(this.courseId, ethKipu.address, hash, signature, '')
+					.safeMint(this.courseId, signer, hash, signature, '')
 
 				await safeMintCertificateTx.wait()
 

@@ -46,17 +46,19 @@ interface IRegistry {
 	);
 
 	/// =========================
+	/// ====== Initializer ======
+	/// =========================
+
+	function initialize(address _owner, address _attestationProtocol) external;
+
+	/// =========================
 	/// ==== View Functions =====
 	/// =========================
 
-	function getAttestationProtocol() external view returns (address);
+	function getAttestationProvider() external view returns (address);
 
 	function getProfileById(
 		bytes32 _profileId
-	) external view returns (Profile memory profile);
-
-	function getProfileByAnchor(
-		address _anchor
 	) external view returns (Profile memory profile);
 
 	function isOwnerOrMemberOfProfile(
@@ -80,12 +82,10 @@ interface IRegistry {
 
 	function acceptProfileOwnership(bytes32 _profileId) external;
 
-	function addProfileMembers(
+	function addProfileManagers(
 		bytes32 _profileId,
-		address[] memory _members
+		address[] memory _managers
 	) external;
-
-	function recoverFunds(address _token, address _recipient) external;
 
 	function didReceiveAttestation(
 		address,
@@ -94,12 +94,12 @@ interface IRegistry {
 		bytes calldata extraData
 	) external payable;
 
-	function removeMembers(
+	function removeManagers(
 		bytes32 _profileId,
-		address[] memory _members
+		address[] memory _managers
 	) external;
 
-	function updateAttestationProtocol(address _attestationProtocol) external;
+	function updateAttestationProvider(address _attestationProtocol) external;
 
 	function updateProfileName(
 		bytes32 _profileId,

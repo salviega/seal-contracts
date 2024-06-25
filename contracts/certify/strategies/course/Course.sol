@@ -22,14 +22,9 @@ contract Course is
 	/// === Storage Variables ====
 	/// ==========================
 
-	mapping(address => Status) private canMint;
+	mapping(address => Status) private status;
 
 	uint256 private tokenIdCounter;
-	IRegistry private _registry;
-
-	/// ====================================
-	/// ========== Modifier ================
-	/// ====================================
 
 	/// ====================================
 	/// ========== Constructor =============
@@ -48,8 +43,6 @@ contract Course is
 	function initialize(uint256 _courseId) public override onlyCertify {
 		__BaseStrategy_init(_courseId);
 
-		_registry = certify.getRegistry();
-
 		emit Initialized(_courseId);
 	}
 
@@ -57,24 +50,24 @@ contract Course is
 	//  ==== External/Public Functions =====
 	//  ====================================
 
-	function authorizeToMint(address _account) external onlyCertify {
-		if (canMint[_account] != Status.None) revert ALREADY_AUTHORIZED();
-		canMint[_account] = Status.Pending;
+	function authorizeToMint(address _recipient) external onlyCertify {
+		if (status[_recipient] != Status.None) revert ALREADY_AUTHORIZED();
+		status[_recipient] = Status.Pending;
 	}
 
 	function safeMint(
 		address _to,
 		string calldata _uri
 	) external onlyCertify returns (uint256) {
-		if (canMint[_to] != Status.Pending) revert CANNOT_MINT();
+		if (status[_to] != Status.Pending) revert CANNOT_MINT();
 
-		tokenIdCounter++;
-		uint256 tokenId = tokenIdCounter++;
+		uint256 tokenId = ++tokenIdCounter;
 
 		_safeMint(_to, tokenId);
+
 		_setTokenURI(tokenId, _uri);
 
-		canMint[_to] = Status.Accepted;
+		status[_to] = Status.Accepted;
 
 		return tokenId;
 	}

@@ -22,14 +22,13 @@ contract Registry is
 	/// === Storage Variables ===
 	/// =========================
 
-	// TODO: I have those mappings names
-	mapping(address => bool) public accountAuthorizedToBeOwnerProfile;
-	mapping(address => bytes32) public anchorToProfileId;
-	mapping(bytes32 => Profile) public profilesToId;
-	mapping(bytes32 => address) public profileIdToPendingOwner;
+	mapping(address account => bool) private authorizations;
+	mapping(address anchor => bytes32) private profileIds;
+	mapping(bytes32 profileId => Profile) private profiles;
+	mapping(bytes32 profileId => address) private pendingOwners;
 
 	bytes32 public constant CERTIFY_OWNER = keccak256('CERTIFY_OWNER');
-	address public attestationProtocol;
+	address public attestationProvider;
 
 	/// =========================
 	/// ====== Initializer ======
@@ -37,13 +36,11 @@ contract Registry is
 
 	function initialize(
 		address _owner,
-		address _attestationProtocol
+		address _attestationProvider
 	) external reinitializer(1) {
 		if (_owner == address(0)) revert ZERO_ADDRESS();
-		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
 
-		_updateAttestationProtocol(_attestationProtocol);
-
+		_updateAttestationProvider(_attestationProvider);
 		_grantRole(CERTIFY_OWNER, _owner);
 	}
 
@@ -51,13 +48,13 @@ contract Registry is
 	/// ======= Modifiers =======
 	/// =========================
 
-	modifier onlyAccountAuthorizedToBeOwnerProfile(address _account) {
-		if (!accountAuthorizedToBeOwnerProfile[_account]) revert UNAUTHORIZED();
+	modifier onlyAccountAuthorized(address _account) {
+		if (!authorizations[_account]) revert UNAUTHORIZED();
 		_;
 	}
 
-	modifier onlyAttesterProtocol() {
-		if (msg.sender != attestationProtocol) revert UNAUTHORIZED();
+	modifier onlyAttestationProvider() {
+		if (msg.sender != attestationProvider) revert NOT_ATTESTATION_PROVIDER();
 		_;
 	}
 
@@ -70,21 +67,14 @@ contract Registry is
 	/// ===== View Functions =====
 	/// ==========================
 
-	function getAttestationProtocol() external view returns (address) {
-		return attestationProtocol;
-	}
-
-	function getProfileByAnchor(
-		address _anchor
-	) external view returns (Profile memory) {
-		bytes32 profileId = anchorToProfileId[_anchor];
-		return profilesToId[profileId];
+	function getAttestationProvider() external view returns (address) {
+		return attestationProvider;
 	}
 
 	function getProfileById(
 		bytes32 _profileId
 	) external view returns (Profile memory) {
-		return profilesToId[_profileId];
+		return profiles[_profileId];
 	}
 
 	function isAuthorizedToCreateProfile(
@@ -121,32 +111,30 @@ contract Registry is
 	/// =================================
 
 	function acceptProfileOwnership(bytes32 _profileId) external {
-		Profile storage profile = profilesToId[_profileId];
+		Profile storage profile = profiles[_profileId];
 
-		address newOwner = profileIdToPendingOwner[_profileId];
+		address newOwner = pendingOwners[_profileId];
 
 		if (msg.sender != newOwner) revert NOT_PENDING_OWNER();
 
 		profile.owner = newOwner;
-		delete profileIdToPendingOwner[_profileId];
+		delete pendingOwners[_profileId];
 
 		emit ProfileOwnerUpdated(_profileId, profile.owner);
 	}
 
-	function addProfileMembers(
+	function addProfileManagers(
 		bytes32 _profileId,
-		address[] memory _members
+		address[] memory _managers
 	) external onlyProfileOwner(_profileId) {
-		if (_members.length == 0) revert EMPTY_ARRAY();
+		if (_managers.length == 0) revert EMPTY_ARRAY();
 
-		uint256 memberLength = _members.length;
+		for (uint256 i; i < _managers.length; ) {
+			address manager = _managers[i];
 
-		for (uint256 i; i < memberLength; ) {
-			address member = _members[i];
+			if (manager == address(0)) revert ZERO_ADDRESS();
 
-			if (member == address(0)) revert ZERO_ADDRESS();
-
-			_grantRole(_profileId, member);
+			_grantRole(_profileId, manager);
 			unchecked {
 				++i;
 			}
@@ -158,19 +146,8 @@ contract Registry is
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
 		if (_account == address(0)) revert ZERO_ADDRESS();
-		accountAuthorizedToBeOwnerProfile[_account] = _status;
+		authorizations[_account] = _status;
 		emit AccountAuthorizedToCreateProfile(_account, _status);
-	}
-
-	function createProfile(
-		uint64 _attestationId,
-		uint256 _nonce,
-		string memory _name,
-		address _owner,
-		address[] memory _members
-	) external onlyRole(CERTIFY_OWNER) {
-		accountAuthorizedToBeOwnerProfile[_owner] = true;
-		_createProfile(_attestationId, _nonce, _name, _owner, _members);
 	}
 
 	// This function is called by the attestor contract
@@ -180,13 +157,13 @@ contract Registry is
 		uint64,
 		uint64 attestationId,
 		bytes calldata extraData
-	) external payable onlyAttesterProtocol {
-		(uint256 nouce, string memory name, address[] memory members) = abi.decode(
+	) external payable onlyAttestationProvider {
+		(uint256 nouce, string memory name, address[] memory managers) = abi.decode(
 			extraData,
 			(uint256, string, address[])
 		);
 
-		_createProfile(attestationId, nouce, name, _attester, members);
+		_createProfile(attestationId, nouce, name, _attester, managers);
 	}
 
 	function recoverFunds(
@@ -201,25 +178,22 @@ contract Registry is
 		_transferAmount(_token, _recipient, amount);
 	}
 
-	function removeMembers(
+	function removeManagers(
 		bytes32 _profileId,
-		address[] memory _members
+		address[] memory _managers
 	) external onlyProfileOwner(_profileId) {
-		uint256 memberLength = _members.length;
-
-		for (uint256 i; i < memberLength; ) {
-			_revokeRole(_profileId, _members[i]);
+		for (uint256 i; i < _managers.length; ) {
+			_revokeRole(_profileId, _managers[i]);
 			unchecked {
 				++i;
 			}
 		}
 	}
 
-	function updateAttestationProtocol(
-		address _attestationProtocol
+	function updateAttestationProvider(
+		address _attestationProvider
 	) external onlyRole(CERTIFY_OWNER) {
-		if (_attestationProtocol == address(0)) revert ZERO_ADDRESS();
-		_updateAttestationProtocol(_attestationProtocol);
+		_updateAttestationProvider(_attestationProvider);
 	}
 
 	function updateProfileName(
@@ -228,14 +202,14 @@ contract Registry is
 	) external onlyProfileOwner(_profileId) returns (address anchor) {
 		anchor = _generateAnchor(_profileId, _name);
 
-		Profile storage profile = profilesToId[_profileId];
+		Profile storage profile = profiles[_profileId];
 
 		profile.name = _name;
 
-		anchorToProfileId[profile.anchor] = bytes32(0);
+		profileIds[profile.anchor] = bytes32(0);
 
 		profile.anchor = anchor;
-		anchorToProfileId[anchor] = _profileId;
+		profileIds[anchor] = _profileId;
 
 		emit ProfileNameUpdated(_profileId, _name, anchor);
 
@@ -246,7 +220,7 @@ contract Registry is
 		bytes32 _profileId,
 		address _pendingOwner
 	) external onlyProfileOwner(_profileId) {
-		profileIdToPendingOwner[_profileId] = _pendingOwner;
+		pendingOwners[_profileId] = _pendingOwner;
 
 		emit ProfilePendingOwnerUpdated(_profileId, _pendingOwner);
 	}
@@ -264,12 +238,11 @@ contract Registry is
 		uint256 _nonce,
 		string memory _name,
 		address _owner,
-		address[] memory _members
-	) internal onlyAccountAuthorizedToBeOwnerProfile(_owner) returns (bytes32) {
+		address[] memory _managers
+	) internal returns (bytes32) {
 		bytes32 profileId = _generateProfileId(_nonce, _owner);
 
-		if (profilesToId[profileId].anchor != address(0))
-			revert NONCE_NOT_AVAILABLE();
+		if (profiles[profileId].anchor != address(0)) revert NONCE_NOT_AVAILABLE();
 
 		if (_owner == address(0)) revert ZERO_ADDRESS();
 
@@ -281,24 +254,23 @@ contract Registry is
 			anchor: _generateAnchor(profileId, _name)
 		});
 
-		profilesToId[profileId] = profile;
-		anchorToProfileId[profile.anchor] = profileId;
+		profiles[profileId] = profile;
+		profileIds[profile.anchor] = profileId;
 
-		uint256 memberLength = _members.length;
 		bool isAuthorized = _isAuthorizedToCreateProfile(_owner);
 
-		if (memberLength > 0 && !isAuthorized) {
+		if (_managers.length > 0 && !isAuthorized) {
 			revert UNAUTHORIZED();
 		}
 
-		accountAuthorizedToBeOwnerProfile[_owner] = false;
+		authorizations[_owner] = false;
 
-		for (uint256 i; i < memberLength; ) {
-			address member = _members[i];
+		for (uint256 i; i < _managers.length; ) {
+			address manager = _managers[i];
 
-			if (member == address(0)) revert ZERO_ADDRESS();
+			if (manager == address(0)) revert ZERO_ADDRESS();
 
-			_grantRole(profileId, member);
+			_grantRole(profileId, manager);
 			unchecked {
 				++i;
 			}
@@ -367,7 +339,7 @@ contract Registry is
 	function _isAuthorizedToCreateProfile(
 		address _account
 	) internal view returns (bool) {
-		return accountAuthorizedToBeOwnerProfile[_account];
+		return authorizations[_account];
 	}
 
 	function _isMemberOfProfile(
@@ -381,10 +353,11 @@ contract Registry is
 		bytes32 _profileId,
 		address _owner
 	) internal view returns (bool) {
-		return profilesToId[_profileId].owner == _owner;
+		return profiles[_profileId].owner == _owner;
 	}
 
-	function _updateAttestationProtocol(address _attestationProtocol) internal {
-		attestationProtocol = _attestationProtocol;
+	function _updateAttestationProvider(address _attestationProvider) internal {
+		if (_attestationProvider == address(0)) revert ZERO_ADDRESS();
+		attestationProvider = _attestationProvider;
 	}
 }

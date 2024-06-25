@@ -13,8 +13,6 @@ interface ICertify {
 		bytes32 profileId;
 		uint64 attestationId;
 		ICourse course;
-		bytes32 adminRole;
-		bytes32 managerRole;
 	}
 
 	/// ======================
@@ -22,12 +20,10 @@ interface ICertify {
 	/// ======================
 
 	event CourseCreated(
+		uint256 indexed courseId,
 		bytes32 indexed profileId,
 		uint64 indexed attestationId,
-		uint256 indexed courseId,
-		address course,
-		bytes32 managerRole,
-		bytes32 adminRole
+		address course
 	);
 
 	event CourseApproved(address course);
@@ -41,54 +37,54 @@ interface ICertify {
 	event TreasuryUpdated(address treasury);
 
 	/// =========================
+	/// ====== Initializer ======
+	/// =========================
+
+	function initialize(
+		address _owner,
+		address _registry,
+		address _strategy
+	) external;
+
+	/// =========================
 	/// ==== View Functions =====
 	/// =========================
 
 	function getCourse(uint256 _courseId) external view returns (Course memory);
 
-	function getCourseAddress(uint256 _courseId) external view returns (address);
-
 	function getRegistry() external view returns (IRegistry);
 
-	function getTreasury() external view returns (address payable);
-
-	function isCourseAdmin(
-		uint256 _courseId,
-		address _address
-	) external view returns (bool);
-
-	function isCourseManager(
-		uint256 _courseId,
-		address _address
-	) external view returns (bool);
+	function getStrategy() external view returns (address);
 
 	/// =================================
 	/// == External / Public Functions ==
 	/// =================================
 
-	function initialize(
-		address _owner,
-		address _registry,
-		address payable _treasury
-	) external;
-
-	function createCourse(
-		bytes32 _profileId,
+	function didReceiveAttestation(
+		address _attester,
+		uint64,
 		uint64 _attestationId,
-		address _course,
-		address[] memory _managers
-	) external returns (uint256 courseId);
-
-	function addCourseManagers(
-		uint256 _courseId,
-		address[] memory _managers
-	) external;
-
-	function removeCourseManager(uint256 _courseId, address _manager) external;
-
-	function recoverFunds(address _token, address _recipient) external;
+		bytes calldata extraData
+	) external payable;
 
 	function updateRegistry(address _registry) external;
 
-	function updateTreasury(address payable _treasury) external;
+	function updateStrategy(address _strategy) external;
+
+	// ====================================
+	// ======= Strategy Functions =========
+	// ====================================
+
+	function recoverFundsOfCourse(
+		uint256 _courseId,
+		address _token,
+		address _recipient
+	) external;
+
+	function safeMint(
+		uint256 _courseId,
+		bytes32 _hash,
+		bytes memory _signature,
+		string calldata _uri
+	) external;
 }
