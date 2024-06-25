@@ -33,12 +33,10 @@ contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
 
 	function initialize(
 		address _owner,
-		address _registry,
-		address _strategy
+		address _registry
 	) external reinitializer(1) {
 		_initializeOwner(_owner);
 		_updateRegistry(_registry);
-		_updateStrategy(_strategy);
 	}
 
 	// ====================================

@@ -25,7 +25,7 @@ const deployCertify: DeployFunction = async function (
 	const registry: Deployment = await get('Registry')
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const args: any[] = [deployer, registry.address, deployer]
+	const args: any[] = [deployer, registry.address]
 
 	log('-----------------------------------')
 	log('Deploying Certify...')

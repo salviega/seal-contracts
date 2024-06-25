@@ -43,8 +43,8 @@ const deployCourse: DeployFunction = async function (
 		deployerSigner
 	)
 
-	log('Adding Course to cloneable courses...')
-	await certify.addToCloneableCourse(courseDeployment.address)
+	log('Adding Course to Certify...')
+	await certify.updateStrategy(courseDeployment.address)
 }
 
 deployCourse.tags = ['all', 'Course']

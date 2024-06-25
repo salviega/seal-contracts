@@ -40,11 +40,7 @@ interface ICertify {
 	/// ====== Initializer ======
 	/// =========================
 
-	function initialize(
-		address _owner,
-		address _registry,
-		address _strategy
-	) external;
+	function initialize(address _owner, address _registry) external;
 
 	/// =========================
 	/// ==== View Functions =====
