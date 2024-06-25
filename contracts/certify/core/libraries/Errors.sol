@@ -38,9 +38,6 @@ contract Errors {
 	/// ======== Certify ========
 	/// =========================
 
-	/// @notice Thrown when the strategy is not approved
-	error NOT_APPROVED_STRATEGY();
-
 	/// @notice Thrown when sender is not attestation provider
 	error NOT_ATTESTATION_PROVIDER();
 
