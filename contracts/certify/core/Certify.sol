@@ -132,12 +132,24 @@ contract Certify is
 		emit CourseApproved(_course);
 	}
 
-	function addCourseManager(
+	function addCourseManagers(
 		uint256 _courseId,
-		address _manager
+		address[] memory _managers
 	) external onlyOwner {
-		if (_manager == address(0)) revert ZERO_ADDRESS();
-		_grantRole(courses[_courseId].managerRole, _manager);
+		if (_managers.length == 0) revert EMPTY_ARRAY();
+
+		uint256 managersLength = _managers.length;
+
+		for (uint256 i; i < managersLength; ) {
+			address manager = _managers[i];
+
+			if (manager == address(0)) revert ZERO_ADDRESS();
+
+			_grantRole(courses[_courseId].managerRole, manager);
+			unchecked {
+				++i;
+			}
+		}
 	}
 
 	function createCourse(
@@ -291,7 +303,6 @@ contract Certify is
 		Course memory newCourse = Course({
 			attestationId: _attestationId,
 			profileId: _profileId,
-			courseId: courseId,
 			course: _course,
 			adminRole: COURSE_ADMIN_ROLE,
 			managerRole: COURSE_MANAGER_ROLE

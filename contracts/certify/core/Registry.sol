@@ -133,10 +133,12 @@ contract Registry is
 		emit ProfileOwnerUpdated(_profileId, profile.owner);
 	}
 
-	function addMembers(
+	function addProfileMembers(
 		bytes32 _profileId,
 		address[] memory _members
 	) external onlyProfileOwner(_profileId) {
+		if (_members.length == 0) revert EMPTY_ARRAY();
+
 		uint256 memberLength = _members.length;
 
 		for (uint256 i; i < memberLength; ) {
@@ -273,7 +275,6 @@ contract Registry is
 
 		Profile memory profile = Profile({
 			attestationId: _attestationId,
-			id: profileId,
 			nonce: _nonce,
 			name: _name,
 			owner: _owner,
@@ -305,7 +306,7 @@ contract Registry is
 
 		emit ProfileCreated(
 			profile.attestationId,
-			profile.id,
+			profileId,
 			profile.nonce,
 			profile.name,
 			profile.owner,

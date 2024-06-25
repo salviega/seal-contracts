@@ -8,7 +8,6 @@ interface IRegistry {
 
 	struct Profile {
 		uint64 attestationId;
-		bytes32 id;
 		uint256 nonce;
 		string name;
 		address owner;
@@ -81,7 +80,10 @@ interface IRegistry {
 
 	function acceptProfileOwnership(bytes32 _profileId) external;
 
-	function addMembers(bytes32 _profileId, address[] memory _members) external;
+	function addProfileMembers(
+		bytes32 _profileId,
+		address[] memory _members
+	) external;
 
 	function recoverFunds(address _token, address _recipient) external;
 

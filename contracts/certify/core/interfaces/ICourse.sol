@@ -14,11 +14,6 @@ interface ICourse {
 		Accepted
 	}
 
-	struct PayoutSummary {
-		address recipientAddress;
-		uint256 amount;
-	}
-
 	/// ======================
 	/// ======= Events =======
 	/// ======================

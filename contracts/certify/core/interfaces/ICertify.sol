@@ -12,7 +12,6 @@ interface ICertify {
 	struct Course {
 		bytes32 profileId;
 		uint64 attestationId;
-		uint256 courseId;
 		ICourse course;
 		bytes32 adminRole;
 		bytes32 managerRole;
@@ -80,7 +79,10 @@ interface ICertify {
 		address[] memory _managers
 	) external returns (uint256 courseId);
 
-	function addCourseManager(uint256 _courseId, address _manager) external;
+	function addCourseManagers(
+		uint256 _courseId,
+		address[] memory _managers
+	) external;
 
 	function removeCourseManager(uint256 _courseId, address _manager) external;
 
