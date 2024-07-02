@@ -86,22 +86,28 @@ contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
 		uint64 _attestationId,
 		bytes calldata extraData
 	) external payable onlyAttestationProvider {
-		(bytes32 profileId, address[] memory recipients) = abi.decode(
-			extraData,
-			(bytes32, address[])
-		);
+		(bytes32 profileId, address[] memory recipients, string[] memory uris) = abi
+			.decode(extraData, (bytes32, address[], string[]));
 
-		uint256 courseId = _createCourse(
+		if (registry.getProfileById(profileId).credits < recipients.length) {
+			revert INSUFFICIENT_CREDITS();
+		}
+
+		registry.getProfileById(profileId).credits -= recipients.length;
+
+		Course memory course = _createCourse(
 			profileId,
 			_attester,
 			_attestationId,
-			ICourse(Clone.createClone(strategy, nonces[_attester]++))
+			recipients.length
 		);
 
 		if (recipients.length == 0) revert EMPTY_ARRAY();
 
+		if (recipients.length != uris.length) revert MISMATCH();
+
 		for (uint256 i; i < recipients.length; ) {
-			_authorizeToMint(courseId, recipients[i]);
+			course.course.safeMint(recipients[i], uris[i]);
 
 			unchecked {
 				++i;
@@ -150,10 +156,6 @@ contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
 	/// ======= Internal Functions =========
 	/// ====================================
 
-	function _authorizeToMint(uint256 _courseId, address _account) internal {
-		courses[_courseId].course.authorizeToMint(_account);
-	}
-
 	function _checkSigner(
 		address _signer,
 		bytes32 _hash,
@@ -167,33 +169,39 @@ contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
 		bytes32 _profileId,
 		address _attester,
 		uint64 _attestationId,
-		ICourse _course
-	) internal returns (uint256 courseId) {
+		uint256 _credits
+	) internal returns (Course memory course) {
 		if (!registry.isOwnerOrMemberOfProfile(_profileId, _attester))
 			revert UNAUTHORIZED();
 
-		courseId = ++courseIdCounter;
+		uint256 courseId = ++courseIdCounter;
 
-		Course memory course = Course({
+		ICourse newCourse = ICourse(
+			Clone.createClone(strategy, nonces[_attester]++)
+		);
+
+		course = Course({
 			profileId: _profileId,
 			attestationId: _attestationId,
-			course: _course
+			course: newCourse,
+			credits: _credits
 		});
 
 		courses[courseId] = course;
 
-		_course.initialize(courseId);
+		newCourse.initialize(courseId);
 
 		if (
-			_course.getCourseId() != courseId ||
-			address(_course.getCertify()) != address(this)
+			newCourse.getCourseId() != courseId ||
+			address(newCourse.getCertify()) != address(this)
 		) revert MISMATCH();
 
 		emit CourseCreated(
 			courseId,
 			course.profileId,
 			course.attestationId,
-			address(course.course)
+			address(course.course),
+			course.credits
 		);
 	}
 

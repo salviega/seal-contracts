@@ -26,6 +26,7 @@ contract Registry is
 	mapping(address anchor => bytes32) private profileIds;
 	mapping(bytes32 profileId => Profile) private profiles;
 	mapping(bytes32 profileId => address) private pendingOwners;
+	mapping(address profileOwner => uint256) private credits;
 
 	bytes32 public constant CERTIFY_OWNER = keccak256('CERTIFY_OWNER');
 	address public attestationProvider;
@@ -121,6 +122,31 @@ contract Registry is
 		delete pendingOwners[_profileId];
 
 		emit ProfileOwnerUpdated(_profileId, profile.owner);
+	}
+
+	function addCreditsToAccount(
+		address _account,
+		uint256 _amount
+	) external onlyRole(CERTIFY_OWNER) {
+		if (_amount < 1) revert INVALID_AMOUNT();
+		if (_account == address(0)) revert ZERO_ADDRESS();
+		credits[_account] += _amount;
+
+		emit CreditsAddedToAccount(_account, _amount);
+	}
+
+	function addCreditsToProfile(
+		bytes32 _profileId,
+		uint256 _amount
+	) external onlyRole(CERTIFY_OWNER) {
+		Profile storage profile = profiles[_profileId];
+
+		if (profile.owner == address(0)) revert PROFILE_NOT_FOUND();
+		if (_amount < 1) revert INVALID_AMOUNT();
+
+		profile.credits += _amount;
+
+		emit CreditsAddedToProfile(_profileId, _amount);
 	}
 
 	function addProfileManagers(
@@ -246,14 +272,20 @@ contract Registry is
 
 		if (_owner == address(0)) revert ZERO_ADDRESS();
 
+		if (credits[_owner] < 1) revert NOT_HAVE_CEDRITS();
+
+		uint256 ownerCredits = credits[_owner];
+
 		Profile memory profile = Profile({
 			attestationId: _attestationId,
 			nonce: _nonce,
 			name: _name,
+			credits: ownerCredits,
 			owner: _owner,
 			anchor: _generateAnchor(profileId, _name)
 		});
 
+		credits[_owner] -= ownerCredits;
 		profiles[profileId] = profile;
 		profileIds[profile.anchor] = profileId;
 

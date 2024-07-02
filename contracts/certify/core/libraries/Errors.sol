@@ -19,17 +19,28 @@ contract Errors {
 	error UNAUTHORIZED();
 
 	/// @notice Thrown when address is the zero address
+
+	// @notice Thrown when amount is zero or less
+	error INVALID_AMOUNT();
+
+	/// @notice Thrown when address is the zero address
 	error ZERO_ADDRESS();
 
 	/// ======================
 	/// ====== Registry ======
 	/// ======================
 
+	/// @dev Thrown when the profile is not found
+	error PROFILE_NOT_FOUND();
+
 	/// @dev Thrown when the nonce passed has been used or not available
 	error NONCE_NOT_AVAILABLE();
 
 	/// @dev Thrown when the 'msg.sender' is not the pending owner on ownership transfer
 	error NOT_PENDING_OWNER();
+
+	/// @dev Thrown when the 'msg.sender' has not have credits
+	error NOT_HAVE_CEDRITS();
 
 	/// @dev Thrown if the anchor creation fails
 	error ANCHOR_ERROR();
@@ -56,4 +67,7 @@ contract Errors {
 
 	/// @notice Thrown when the address cannot mint.
 	error CANNOT_MINT();
+
+	/// @notice Thrown when the profile has insufficient credits
+	error INSUFFICIENT_CREDITS();
 }

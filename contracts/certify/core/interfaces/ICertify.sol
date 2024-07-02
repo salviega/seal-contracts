@@ -13,6 +13,7 @@ interface ICertify {
 		bytes32 profileId;
 		uint64 attestationId;
 		ICourse course;
+		uint256 credits;
 	}
 
 	/// ======================
@@ -23,7 +24,8 @@ interface ICertify {
 		uint256 indexed courseId,
 		bytes32 indexed profileId,
 		uint64 indexed attestationId,
-		address course
+		address course,
+		uint256 credits
 	);
 
 	event CourseApproved(address course);

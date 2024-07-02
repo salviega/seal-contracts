@@ -10,6 +10,7 @@ interface IRegistry {
 		uint64 attestationId;
 		uint256 nonce;
 		string name;
+		uint256 credits;
 		address owner;
 		address anchor;
 	}
@@ -22,6 +23,10 @@ interface IRegistry {
 		address indexed account,
 		bool authorized
 	);
+
+	event CreditsAddedToAccount(address indexed account, uint256 amount);
+
+	event CreditsAddedToProfile(bytes32 indexed profileId, uint256 amount);
 
 	event ProfileCreated(
 		uint64 indexed attestationId,

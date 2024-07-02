@@ -62,9 +62,7 @@ interface ICourse {
 	/// == External / Public Functions ==
 	/// =================================
 
-	function authorizeToMint(address account) external;
-
 	function recoverFunds(address token, address recipient) external;
 
-	function safeMint(address to, string calldata uri) external returns (uint256);
+	function safeMint(address to, string memory uri) external returns (uint256);
 }
