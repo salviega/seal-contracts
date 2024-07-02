@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol';
 import 'solady/src/tokens/ERC20.sol';
 import './Anchor.sol';
 import './interfaces/IRegistry.sol';
@@ -13,6 +14,7 @@ import './libraries/Transfer.sol';
 contract Registry is
 	Initializable,
 	AccessControlUpgradeable,
+	MulticallUpgradeable,
 	Errors,
 	Native,
 	Transfer,
@@ -70,6 +72,12 @@ contract Registry is
 
 	function getAttestationProvider() external view returns (address) {
 		return attestationProvider;
+	}
+
+	function getCreditsByAccount(
+		address _account
+	) external view returns (uint256) {
+		return credits[_account];
 	}
 
 	function getProfileById(
@@ -172,6 +180,8 @@ contract Registry is
 		bool _status
 	) external onlyRole(CERTIFY_OWNER) {
 		if (_account == address(0)) revert ZERO_ADDRESS();
+		if (authorizations[_account] == _status) revert SAME_STATUS();
+
 		authorizations[_account] = _status;
 		emit AccountAuthorizedToCreateProfile(_account, _status);
 	}

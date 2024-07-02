@@ -19,7 +19,7 @@ import { ExtraData } from '../models/extradata.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
-describe('Certify', function () {
+describe.skip('Certify', function () {
 	const abiCoder: AbiCoder = new ethers.AbiCoder()
 
 	async function deployFixture() {

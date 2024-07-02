@@ -30,6 +30,9 @@ contract Errors {
 	/// ====== Registry ======
 	/// ======================
 
+	/// @notice Thrown when the authorizations are the same
+	error SAME_STATUS();
+
 	/// @dev Thrown when the profile is not found
 	error PROFILE_NOT_FOUND();
 
