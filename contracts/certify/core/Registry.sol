@@ -11,6 +11,8 @@ import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
+import 'hardhat/console.sol';
+
 contract Registry is
 	Initializable,
 	AccessControlUpgradeable,
@@ -30,7 +32,7 @@ contract Registry is
 	mapping(bytes32 profileId => address) private pendingOwners;
 	mapping(address profileOwner => uint256) private credits;
 
-	bytes32 public constant CERTIFY_OWNER = keccak256('CERTIFY_OWNER');
+	bytes32 public constant SEAL_OWNER = keccak256('SEAL_OWNER');
 	address public attestationProvider;
 
 	/// =========================
@@ -44,7 +46,7 @@ contract Registry is
 		if (_owner == address(0)) revert ZERO_ADDRESS();
 
 		_updateAttestationProvider(_attestationProvider);
-		_grantRole(CERTIFY_OWNER, _owner);
+		_grantRole(SEAL_OWNER, _owner);
 	}
 
 	/// =========================
@@ -135,9 +137,9 @@ contract Registry is
 	function addCreditsToAccount(
 		address _account,
 		uint256 _amount
-	) external onlyRole(CERTIFY_OWNER) {
-		if (_amount < 1) revert INVALID_AMOUNT();
+	) external onlyRole(SEAL_OWNER) {
 		if (_account == address(0)) revert ZERO_ADDRESS();
+		if (_amount < 1) revert INVALID_AMOUNT();
 		credits[_account] += _amount;
 
 		emit CreditsAddedToAccount(_account, _amount);
@@ -146,7 +148,7 @@ contract Registry is
 	function addCreditsToProfile(
 		bytes32 _profileId,
 		uint256 _amount
-	) external onlyRole(CERTIFY_OWNER) {
+	) external onlyRole(SEAL_OWNER) {
 		Profile storage profile = profiles[_profileId];
 
 		if (profile.owner == address(0)) revert PROFILE_NOT_FOUND();
@@ -178,7 +180,7 @@ contract Registry is
 	function authorizeProfileCreation(
 		address _account,
 		bool _status
-	) external onlyRole(CERTIFY_OWNER) {
+	) external onlyRole(SEAL_OWNER) {
 		if (_account == address(0)) revert ZERO_ADDRESS();
 		if (authorizations[_account] == _status) revert SAME_STATUS();
 
@@ -205,7 +207,7 @@ contract Registry is
 	function recoverFunds(
 		address _token,
 		address _recipient
-	) external onlyRole(CERTIFY_OWNER) {
+	) external onlyRole(SEAL_OWNER) {
 		if (_recipient == address(0)) revert ZERO_ADDRESS();
 
 		uint256 amount = _token == NATIVE
@@ -228,7 +230,7 @@ contract Registry is
 
 	function updateAttestationProvider(
 		address _attestationProvider
-	) external onlyRole(CERTIFY_OWNER) {
+	) external onlyRole(SEAL_OWNER) {
 		_updateAttestationProvider(_attestationProvider);
 	}
 
