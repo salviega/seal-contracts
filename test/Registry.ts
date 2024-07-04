@@ -7,6 +7,7 @@ import { string } from 'hardhat/internal/core/params/argumentTypes'
 
 import { CREATE_PROFILE_TYPES } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
+import { executeMulticall } from '../helpers/execute-multicall'
 import { getEvetnArgs } from '../helpers/get-events-args'
 import { attestationContractToAttestation } from '../mappings/attestation-contract-to-attestation.mapping'
 import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
@@ -79,20 +80,14 @@ describe('Registry', function () {
 		santiago: HardhatEthersSigner,
 		schemaId: number
 
-	this.beforeAll(async () => {
-		const fixture = await loadFixture(deployFixture)
+	describe('Authorization', () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+		})
 
-		sp = fixture.sp
-		registry = fixture.registry
-		seal = fixture.seal
-		educateth = fixture.educateth
-		julio = fixture.julio
-		oscar = fixture.oscar
-		santiago = fixture.santiago
-		schemaId = fixture.schemaId
-	})
-
-	describe('Profile Creation', () => {
 		it('Should revert if an account tries to authorize itself', async () => {
 			await expect(
 				registry
@@ -103,7 +98,7 @@ describe('Registry', function () {
 					registry,
 					'AccessControlUnauthorizedAccount'
 				)
-				.withArgs(educateth.address, ethers.id('CERTIFY_OWNER'))
+				.withArgs(educateth.address, ethers.id('SEAL_OWNER'))
 		})
 
 		it('Should revert if try to authorize a zero account', async () => {
@@ -165,6 +160,13 @@ describe('Registry', function () {
 	})
 
 	describe('Credits', () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+		})
+
 		it('Should revert if an account tries to add credits to itself', async () => {
 			await expect(
 				registry.connect(educateth).addCreditsToAccount(educateth.address, 1000)
@@ -173,7 +175,7 @@ describe('Registry', function () {
 					registry,
 					'AccessControlUnauthorizedAccount'
 				)
-				.withArgs(educateth.address, ethers.id('seal_OWNER'))
+				.withArgs(educateth.address, ethers.id('SEAL_OWNER'))
 		})
 
 		it('Should revert if an account tries to add credits to a zero account', async () => {
@@ -201,74 +203,65 @@ describe('Registry', function () {
 
 			expect(1000).to.equal(updatedCredits)
 		})
-	})
 
-	it.skip('Should authorize and add credits to an account', async () => {
-		const { registry, educateth } = await loadFixture(deployFixture)
-
-		const authorizeProfileCreationData = registry.interface.encodeFunctionData(
-			'authorizeProfileCreation',
-			[educateth.address, true]
-		)
-
-		const addCreditsToAccountData = registry.interface.encodeFunctionData(
-			'addCreditsToAccount',
-			[educateth.address, 1000]
-		)
-
-		const multicallTx = await registry
-			.connect(seal)
-			.multicall([authorizeProfileCreationData, addCreditsToAccountData])
-
-		await multicallTx.wait()
-
-		const updatedStatus: boolean = await registry.isAuthorizedToCreateProfile(
-			educateth.address
-		)
-
-		const updatedCredits: bigint = await registry.getCreditsByAccount(
-			educateth.address
-		)
-
-		expect(true).to.equal(updatedStatus)
-		expect(1000).to.equal(updatedCredits)
-	})
-
-	describe.skip('Validations', () => {
-		it('Should be reverted if another account authorizes an account to create a profile.', async () => {
-			const { registry, seal, educateth } = await loadFixture(deployFixture)
-
-			const account: string = educateth.address
-			const status: boolean = true
-
+		it('Should emit an event when credits are added to an account', async () => {
 			await expect(
-				registry.connect(educateth).authorizeProfileCreation(account, status)
+				registry.connect(seal).addCreditsToAccount(educateth.address, 1000)
 			)
-				.to.be.revertedWithCustomError(
-					registry,
-					'AccessControlUnauthorizedAccount'
-				)
-				.withArgs(educateth.address, ethers.id('seal_OWNER'))
+				.to.emit(registry, 'CreditsAddedToAccount')
+				.withArgs(educateth.address, 1000)
 		})
-		it.skip('Should be reverted if an account creates a profile again without being authorized again.', async () => {
-			const {
-				sp,
-				registry,
-				seal,
-				educateth,
-				julio,
-				oscar,
-				santiago,
-				schemaId
-			} = await loadFixture(deployFixture)
+	})
 
-			await registry
-				.connect(seal)
-				.authorizeProfileCreation(educateth.address, true)
+	describe('Multicall', () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+		})
 
-			const educatethNonce: number = await ethers.provider.getTransactionCount(
+		it('Should authorize and add credits to an account', async () => {
+			await executeMulticall(registry, seal, [
+				{ name: 'authorizeProfileCreation', params: [educateth.address, true] },
+				{ name: 'addCreditsToAccount', params: [educateth.address, 1000] }
+			])
+
+			const updatedStatus: boolean = await registry.isAuthorizedToCreateProfile(
 				educateth.address
 			)
+
+			const updatedCredits: bigint = await registry.getCreditsByAccount(
+				educateth.address
+			)
+
+			expect(true).to.equal(updatedStatus)
+			expect(1000).to.equal(updatedCredits)
+		})
+	})
+
+	describe('Create Profile', () => {
+		let attestationArray: any[], profileArray: unknown[]
+
+		const resolverFeesETH: bigint = ethers.parseEther('0')
+		const indexingKey: string = 'Nothing'
+		const delegateSignature: BytesLike = '0x'
+
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			sp = fixture.sp
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+			julio = fixture.julio
+			oscar = fixture.oscar
+			santiago = fixture.santiago
+			schemaId = fixture.schemaId
+
+			await executeMulticall(registry, seal, [
+				{ name: 'authorizeProfileCreation', params: [educateth.address, true] },
+				{ name: 'addCreditsToAccount', params: [educateth.address, 1000] }
+			])
 
 			const educatethAddressBytes: BytesLike = ethers.zeroPadBytes(
 				educateth.address,
@@ -290,7 +283,7 @@ describe('Registry', function () {
 				data: '0x'
 			}
 
-			const attestationArray: unknown[] = [
+			attestationArray = [
 				attestation.schemaId,
 				attestation.linkedAttestationId,
 				attestation.attestTimestamp,
@@ -303,30 +296,94 @@ describe('Registry', function () {
 				attestation.data
 			]
 
-			const resolverFeesETH: bigint = ethers.parseEther('1')
-			const indexingKey: string = 'Nothing'
-			const delegateSignature: BytesLike = '0x'
+			const nonce: number = await ethers.provider.getTransactionCount(
+				educateth.address
+			)
 
 			const educatethProfile: Profile = {
-				nonce: educatethNonce,
-				name: 'educateth',
-				members: [santiago.address, oscar.address, julio.address]
+				nonce,
+				name: 'EducatETH',
+				managers: [julio.address, oscar.address, santiago.address]
 			}
 
-			const educatethProfileArray: unknown[] = Object.values(educatethProfile)
+			profileArray = Object.values(educatethProfile)
+		})
+
+		describe('Authorization', async () => {
+			beforeEach(async () => {
+				const fixture = await loadFixture(deployFixture)
+				sp = fixture.sp
+				registry = fixture.registry
+				seal = fixture.seal
+				educateth = fixture.educateth
+				julio = fixture.julio
+				oscar = fixture.oscar
+				santiago = fixture.santiago
+				schemaId = fixture.schemaId
+			})
+
+			it('Should revert if try to create a profile without authorization', async () => {
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					profileArray
+				)
+
+				const addCreditsToAccountTx = await registry
+					.connect(seal)
+					.addCreditsToAccount(educateth.address, 1000)
+
+				await addCreditsToAccountTx.wait()
+
+				await expect(
+					sp
+						.connect(educateth)
+						[
+							'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+						](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+							value: resolverFeesETH
+						})
+				).to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+			})
+
+			it('Should revert if try to create a profile with zero credits', async () => {
+				const extraData: BytesLike = abiCoder.encode(
+					CREATE_PROFILE_TYPES,
+					profileArray
+				)
+
+				const authorizeProfileCreationTx = await registry
+					.connect(seal)
+					.authorizeProfileCreation(educateth.address, true)
+
+				await authorizeProfileCreationTx.wait()
+
+				await expect(
+					sp
+						.connect(educateth)
+						[
+							'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+						](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+							value: resolverFeesETH
+						})
+				).to.be.revertedWithCustomError(registry, 'NOT_HAVE_CEDRITS')
+			})
+		})
+
+		it('Should revert if account tries to create a profile', async () => {
+			await expect(
+				registry.connect(seal).didReceiveAttestation(ZeroAddress, 0, 0, '0x')
+			)
+				.to.be.revertedWithCustomError(registry, 'NOT_ATTESTATION_PROVIDER')
+				.withArgs()
+		})
+
+		it('Should revert if try to create a profile with zeros managers)', async () => {
+			profileArray[2] = [ZeroAddress, ZeroAddress, ZeroAddress]
 
 			const extraData: BytesLike = abiCoder.encode(
 				CREATE_PROFILE_TYPES,
-				educatethProfileArray
+				profileArray
 			)
-
-			await sp
-				.connect(educateth)
-				[
-					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
-				](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
-					value: resolverFeesETH
-				})
 
 			await expect(
 				sp
@@ -336,24 +393,45 @@ describe('Registry', function () {
 					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
 						value: resolverFeesETH
 					})
-			)
-				.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
-				.withArgs()
+			).to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
 		})
-	})
 
-	describe.skip('Events', () => {
-		it('Should emit an event when a new account is authorized to create a profile', async () => {
-			const { registry, seal, educateth } = await loadFixture(deployFixture)
+		it('Should emit an event when a profile is created', async () => {
+			profileArray[2] = [julio.address, oscar.address, santiago.address]
 
-			const account: string = educateth.address
-			const status: boolean = true
-
-			await expect(
-				registry.connect(seal).authorizeProfileCreation(account, status)
+			const extraData: BytesLike = abiCoder.encode(
+				CREATE_PROFILE_TYPES,
+				profileArray
 			)
-				.to.emit(registry, 'AccountAuthorizedToCreateProfile')
-				.withArgs(account, status)
+
+			const attestTx = await sp
+				.connect(educateth)
+				[
+					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+				](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+					value: resolverFeesETH
+				})
+
+			await attestTx.wait()
+
+			expect(attestTx).emit(registry, 'ProfileCreated')
+
+			const [attestationId, profileId, nonce, name, credits, owner, anchor] =
+				await getEvetnArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
+
+			const profile: Profile = {
+				attestationId,
+				nonce,
+				name,
+				credits,
+				owner,
+				anchor
+			}
+
+			const updatedProfile = await registry.getProfileById(profileId)
+			const mappedProfile: Profile = profileContractToProfile(updatedProfile)
+
+			expect(profile).to.deep.equal(mappedProfile)
 		})
 	})
 })

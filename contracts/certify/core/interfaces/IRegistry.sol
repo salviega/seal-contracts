@@ -33,6 +33,7 @@ interface IRegistry {
 		bytes32 indexed id,
 		uint256 nonce,
 		string name,
+		uint256 credits,
 		address owner,
 		address anchor
 	);

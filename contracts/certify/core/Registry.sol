@@ -325,6 +325,7 @@ contract Registry is
 			profileId,
 			profile.nonce,
 			profile.name,
+			profile.credits,
 			profile.owner,
 			profile.anchor
 		);

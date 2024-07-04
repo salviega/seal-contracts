@@ -6,7 +6,8 @@ export function profileContractToProfile(profileContract: any): Profile {
 		attestationId: profileContract[0],
 		nonce: profileContract[1],
 		name: profileContract[2],
-		owner: profileContract[3],
-		anchor: profileContract[4]
+		credits: profileContract[3],
+		owner: profileContract[4],
+		anchor: profileContract[5]
 	}
 }
