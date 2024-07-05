@@ -82,6 +82,12 @@ contract Registry is
 		return credits[_account];
 	}
 
+	function getCreditsByProfileId(
+		bytes32 _profileId
+	) external view returns (uint256) {
+		return profiles[_profileId].credits;
+	}
+
 	function getProfileById(
 		bytes32 _profileId
 	) external view returns (Profile memory) {

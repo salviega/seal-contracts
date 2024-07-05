@@ -247,6 +247,8 @@ describe('Registry', function () {
 		const indexingKey: string = 'Nothing'
 		const delegateSignature: BytesLike = '0x'
 
+		let profileId: BytesLike
+
 		before(async () => {
 			const fixture = await loadFixture(deployFixture)
 			sp = fixture.sp
@@ -309,6 +311,121 @@ describe('Registry', function () {
 			profileArray = Object.values(educatethProfile)
 		})
 
+		it('Should revert if account tries to create a profile', async () => {
+			await expect(
+				registry.connect(seal).didReceiveAttestation(ZeroAddress, 0, 0, '0x')
+			)
+				.to.be.revertedWithCustomError(registry, 'NOT_ATTESTATION_PROVIDER')
+				.withArgs()
+		})
+
+		it('Should revert if try to create a profile with zeros managers)', async () => {
+			profileArray[2] = [ZeroAddress, ZeroAddress, ZeroAddress]
+
+			const extraData: BytesLike = abiCoder.encode(
+				CREATE_PROFILE_TYPES,
+				profileArray
+			)
+
+			await expect(
+				sp
+					.connect(educateth)
+					[
+						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+						value: resolverFeesETH
+					})
+			).to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+		})
+
+		it('Should emit an event when a profile is created', async () => {
+			profileArray[2] = [julio.address, oscar.address, santiago.address]
+
+			const extraData: BytesLike = abiCoder.encode(
+				CREATE_PROFILE_TYPES,
+				profileArray
+			)
+
+			const attestTx = await sp
+				.connect(educateth)
+				[
+					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
+				](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
+					value: resolverFeesETH
+				})
+
+			await attestTx.wait()
+
+			expect(attestTx).emit(registry, 'ProfileCreated')
+
+			const [attestationId, id, nonce, name, credits, owner, anchor] =
+				await getEvetnArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
+
+			const profile: Profile = {
+				attestationId,
+				nonce,
+				name,
+				credits,
+				owner,
+				anchor
+			}
+
+			const updatedProfile = await registry.getProfileById(id)
+			const mappedProfile: Profile = profileContractToProfile(updatedProfile)
+
+			profileId = id
+
+			expect(profile).to.deep.equal(mappedProfile)
+		})
+
+		describe('Credits', async () => {
+			const otherProfileId: BytesLike = ethers.id('EXAMPLE_ID')
+
+			it('Should revert if an account tries to add credits', async () => {
+				await expect(
+					registry.connect(educateth).addCreditsToProfile(profileId, 1000)
+				)
+					.to.be.revertedWithCustomError(
+						registry,
+						'AccessControlUnauthorizedAccount'
+					)
+					.withArgs(educateth.address, ethers.id('SEAL_OWNER'))
+			})
+
+			it('Should revert if try to add credits a profile not found', async () => {
+				await expect(
+					registry.connect(seal).addCreditsToProfile(otherProfileId, 1000)
+				).to.be.revertedWithCustomError(registry, 'PROFILE_NOT_FOUND')
+			})
+
+			it('Should revert if try to add zero credits', async () => {
+				await expect(
+					registry.connect(seal).addCreditsToProfile(profileId, 0)
+				).to.be.revertedWithCustomError(registry, 'INVALID_AMOUNT')
+			})
+
+			it('Should add credits', async () => {
+				const getCreditsByProfileIdTx = await registry
+					.connect(seal)
+					.addCreditsToProfile(profileId, 1000)
+
+				await getCreditsByProfileIdTx.wait()
+
+				const updatedCredits: number =
+					await registry.getCreditsByProfileId(profileId)
+
+				expect(2000).to.equal(updatedCredits)
+			})
+
+			it('Should emit an event when credits are added', async () => {
+				await expect(
+					registry.connect(seal).addCreditsToProfile(profileId, 1000)
+				)
+					.to.emit(registry, 'CreditsAddedToProfile')
+					.withArgs(profileId, 1000)
+			})
+		})
+
 		describe('Authorization', async () => {
 			beforeEach(async () => {
 				const fixture = await loadFixture(deployFixture)
@@ -367,71 +484,6 @@ describe('Registry', function () {
 						})
 				).to.be.revertedWithCustomError(registry, 'NOT_HAVE_CEDRITS')
 			})
-		})
-
-		it('Should revert if account tries to create a profile', async () => {
-			await expect(
-				registry.connect(seal).didReceiveAttestation(ZeroAddress, 0, 0, '0x')
-			)
-				.to.be.revertedWithCustomError(registry, 'NOT_ATTESTATION_PROVIDER')
-				.withArgs()
-		})
-
-		it('Should revert if try to create a profile with zeros managers)', async () => {
-			profileArray[2] = [ZeroAddress, ZeroAddress, ZeroAddress]
-
-			const extraData: BytesLike = abiCoder.encode(
-				CREATE_PROFILE_TYPES,
-				profileArray
-			)
-
-			await expect(
-				sp
-					.connect(educateth)
-					[
-						'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
-					](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
-						value: resolverFeesETH
-					})
-			).to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
-		})
-
-		it('Should emit an event when a profile is created', async () => {
-			profileArray[2] = [julio.address, oscar.address, santiago.address]
-
-			const extraData: BytesLike = abiCoder.encode(
-				CREATE_PROFILE_TYPES,
-				profileArray
-			)
-
-			const attestTx = await sp
-				.connect(educateth)
-				[
-					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
-				](attestationArray, resolverFeesETH, indexingKey, delegateSignature, extraData, {
-					value: resolverFeesETH
-				})
-
-			await attestTx.wait()
-
-			expect(attestTx).emit(registry, 'ProfileCreated')
-
-			const [attestationId, profileId, nonce, name, credits, owner, anchor] =
-				await getEvetnArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
-
-			const profile: Profile = {
-				attestationId,
-				nonce,
-				name,
-				credits,
-				owner,
-				anchor
-			}
-
-			const updatedProfile = await registry.getProfileById(profileId)
-			const mappedProfile: Profile = profileContractToProfile(updatedProfile)
-
-			expect(profile).to.deep.equal(mappedProfile)
 		})
 	})
 })

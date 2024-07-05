@@ -67,6 +67,10 @@ interface IRegistry {
 		bytes32 _profileId
 	) external view returns (Profile memory profile);
 
+	function getCreditsByProfileId(
+		bytes32 _profileId
+	) external view returns (uint256 credits);
+
 	function isOwnerOrMemberOfProfile(
 		bytes32 _profileId,
 		address _account
@@ -85,6 +89,10 @@ interface IRegistry {
 	/// =================================
 	/// == External / Public Functions ==
 	/// =================================
+
+	function addCreditsToAccount(address _account, uint256 _amount) external;
+
+	function addCreditsToProfile(bytes32 _profileId, uint256 _amount) external;
 
 	function acceptProfileOwnership(bytes32 _profileId) external;
 
