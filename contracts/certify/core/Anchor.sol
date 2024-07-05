@@ -12,7 +12,7 @@ contract Anchor is ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
 	error UNAUTHORIZED();
 	error CALL_FAILED();
 
-	constructor(bytes32 _profileId, address _registry) {
+	constructor(bytes32 _profileId, address payable _registry) {
 		registry = Registry(_registry);
 		profileId = _profileId;
 	}
@@ -33,6 +33,4 @@ contract Anchor is ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
 
 		return data;
 	}
-
-	receive() external payable {}
 }

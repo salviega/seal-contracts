@@ -19,6 +19,8 @@ interface IRegistry {
 	/// ======= Events =======
 	/// ======================
 
+	event AttestationProviderUpdated(address indexed attestationProtocol);
+
 	event AccountAuthorizedToCreateProfile(
 		address indexed account,
 		bool authorized
@@ -61,7 +63,10 @@ interface IRegistry {
 	/// ==== View Functions =====
 	/// =========================
 
-	function getAttestationProvider() external view returns (address);
+	function getAttestationProvider()
+		external
+		view
+		returns (address attestationProtocol);
 
 	function getProfileById(
 		bytes32 _profileId
@@ -96,7 +101,7 @@ interface IRegistry {
 
 	function acceptProfileOwnership(bytes32 _profileId) external;
 
-	function addProfileManagers(
+	function addManagersToProfile(
 		bytes32 _profileId,
 		address[] memory _managers
 	) external;
@@ -108,7 +113,7 @@ interface IRegistry {
 		bytes calldata extraData
 	) external payable;
 
-	function removeManagers(
+	function removeManagersFromProfile(
 		bytes32 _profileId,
 		address[] memory _managers
 	) external;

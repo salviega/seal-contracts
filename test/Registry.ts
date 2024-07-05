@@ -3,13 +3,11 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { expect } from 'chai'
 import { AbiCoder, BytesLike, Contract, ZeroAddress } from 'ethers'
 import hre, { ethers, upgrades } from 'hardhat'
-import { string } from 'hardhat/internal/core/params/argumentTypes'
 
 import { CREATE_PROFILE_TYPES } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
 import { getEvetnArgs } from '../helpers/get-events-args'
-import { attestationContractToAttestation } from '../mappings/attestation-contract-to-attestation.mapping'
 import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Profile } from '../models/profile.model'
@@ -79,6 +77,95 @@ describe('Registry', function () {
 		oscar: HardhatEthersSigner,
 		santiago: HardhatEthersSigner,
 		schemaId: number
+
+	describe('Deployment', async () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			sp = fixture.sp
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+		})
+
+		it('Should SP contract be attestation provider', async () => {
+			const attestationProvider: string =
+				await registry.getAttestationProvider()
+
+			expect(await sp.getAddress()).to.equal(attestationProvider)
+		})
+
+		it('Should Seal be the owner of the Registry', async () => {
+			const rol: string = await registry.SEAL_OWNER()
+			const hasRol: boolean = await registry.hasRole(rol, seal.address)
+			expect(true).to.equal(hasRol)
+		})
+	})
+
+	describe('Update Attestation Provider', () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			registry = fixture.registry
+			seal = fixture.seal
+			educateth = fixture.educateth
+		})
+
+		it('Should revert if an account tries to update the attestation provider', async () => {
+			await expect(
+				registry.connect(educateth).updateAttestationProvider(educateth.address)
+			)
+				.to.be.revertedWithCustomError(
+					registry,
+					'AccessControlUnauthorizedAccount'
+				)
+				.withArgs(educateth.address, ethers.id('SEAL_OWNER'))
+		})
+
+		it('Should revert if try to update the attestation provider with a zero account', async () => {
+			await expect(
+				registry.connect(seal).updateAttestationProvider(ZeroAddress)
+			)
+				.to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+				.withArgs()
+		})
+
+		it('Should revert if try to update the attestation provider with the Register contract', async () => {
+			await expect(
+				registry
+					.connect(seal)
+					.updateAttestationProvider(await registry.getAddress())
+			)
+				.to.be.revertedWithCustomError(registry, 'SAME_CONTRACT')
+				.withArgs()
+		})
+
+		it('Should revert if try to update the same attestation provider', async () => {
+			await expect(
+				registry.connect(seal).updateAttestationProvider(await sp.getAddress())
+			)
+				.to.be.revertedWithCustomError(registry, 'SAME_PROVIDER')
+				.withArgs()
+		})
+
+		it('Should update the attestation provider', async () => {
+			const updateAttestationProviderTx = await registry
+				.connect(seal)
+				.updateAttestationProvider(educateth.address)
+
+			await updateAttestationProviderTx.wait()
+
+			const attestationProvider: string = await registry.attestationProvider()
+
+			expect(educateth.address).to.equal(attestationProvider)
+		})
+
+		it('Should emit an event when the attestation provider is updated', async () => {
+			const spAddress: string = await sp.getAddress()
+
+			await expect(registry.connect(seal).updateAttestationProvider(spAddress))
+				.to.emit(registry, 'AttestationProviderUpdated')
+				.withArgs(spAddress)
+		})
+	})
 
 	describe('Authorization', () => {
 		before(async () => {
@@ -339,7 +426,7 @@ describe('Registry', function () {
 		})
 
 		it('Should emit an event when a profile is created', async () => {
-			profileArray[2] = [julio.address, oscar.address, santiago.address]
+			profileArray[2] = [julio.address, oscar.address]
 
 			const extraData: BytesLike = abiCoder.encode(
 				CREATE_PROFILE_TYPES,
@@ -376,6 +463,212 @@ describe('Registry', function () {
 			profileId = id
 
 			expect(profile).to.deep.equal(mappedProfile)
+		})
+
+		describe('Managers', async () => {
+			describe('Add', async () => {
+				it('Should revert if an non-owner account tries to add a manager', async () => {
+					await expect(
+						registry
+							.connect(julio)
+							.addManagersToProfile(profileId, [santiago.address])
+					)
+						.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+						.withArgs()
+				})
+
+				it('Should revert if try not to add a managers', async () => {
+					await expect(
+						registry.connect(educateth).addManagersToProfile(profileId, [])
+					)
+						.to.be.revertedWithCustomError(registry, 'EMPTY_ARRAY')
+						.withArgs()
+				})
+
+				it('Should revert if try to add a zero manager', async () => {
+					await expect(
+						registry
+							.connect(educateth)
+							.addManagersToProfile(profileId, [ZeroAddress])
+					)
+						.to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+						.withArgs()
+				})
+
+				it('Should add a manager', async () => {
+					const addManagersToProfileTx = await registry
+						.connect(educateth)
+						.addManagersToProfile(profileId, [santiago.address])
+
+					await addManagersToProfileTx.wait()
+
+					const hasRol: boolean = await registry.hasRole(
+						profileId,
+						santiago.address
+					)
+
+					expect(true).to.equal(hasRol)
+				})
+			})
+
+			describe('Remove', async () => {
+				it('Should revert if an non-owner account tries to remove a manager', async () => {
+					await expect(
+						registry
+							.connect(julio)
+							.removeManagersFromProfile(profileId, [santiago.address])
+					)
+						.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+						.withArgs()
+				})
+
+				it('Should revert if try not to remove a managers', async () => {
+					await expect(
+						registry.connect(educateth).removeManagersFromProfile(profileId, [])
+					)
+						.to.be.revertedWithCustomError(registry, 'EMPTY_ARRAY')
+						.withArgs()
+				})
+
+				it('Should revert if try to remove a zero manager', async () => {
+					await expect(
+						registry
+							.connect(educateth)
+							.removeManagersFromProfile(profileId, [ZeroAddress])
+					)
+						.to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+						.withArgs()
+				})
+
+				it('Should remove a manager', async () => {
+					const removeManagersFromProfileTx = await registry
+						.connect(educateth)
+						.removeManagersFromProfile(profileId, [santiago.address])
+
+					await removeManagersFromProfileTx.wait()
+
+					const hasRol: boolean = await registry.hasRole(
+						profileId,
+						santiago.address
+					)
+
+					expect(false).to.equal(hasRol)
+				})
+			})
+		})
+
+		describe('Update', async () => {
+			describe('Name', async () => {
+				it('Should revert if an non-owner account tries to update the name', async () => {
+					await expect(
+						registry
+							.connect(julio)
+							.updateProfileName(profileId, 'EducatETH 2.0')
+					)
+						.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+						.withArgs()
+				})
+
+				it('Should change the name', async () => {
+					const updateProfileNameTx = await registry
+						.connect(educateth)
+						.updateProfileName(profileId, 'EducatETH 2.0')
+
+					await updateProfileNameTx.wait()
+
+					const updatedProfile = await registry.getProfileById(profileId)
+					const mappedProfile: Profile =
+						profileContractToProfile(updatedProfile)
+
+					expect('EducatETH 2.0').to.equal(mappedProfile.name)
+				})
+
+				it('Should emit an event when the name is updated', async () => {
+					const updateProfileNameTx = await registry
+						.connect(educateth)
+						.updateProfileName(profileId, 'EducatETH')
+
+					await updateProfileNameTx.wait()
+
+					const updatedProfile = await registry.getProfileById(profileId)
+					const mappedProfile: Profile =
+						profileContractToProfile(updatedProfile)
+
+					await expect(updateProfileNameTx)
+						.to.emit(registry, 'ProfileNameUpdated')
+						.withArgs(profileId, 'EducatETH', mappedProfile.anchor)
+				})
+			})
+			describe('Pending owner', async () => {
+				it('Should revert if an non-owner account tries to update the pending owner', async () => {
+					await expect(
+						registry
+							.connect(julio)
+							.updateProfilePendingOwner(profileId, julio.address)
+					)
+						.to.be.revertedWithCustomError(registry, 'UNAUTHORIZED')
+						.withArgs()
+				})
+
+				it('Should revert if try to update the pending owner with a zero account', async () => {
+					await expect(
+						registry
+							.connect(educateth)
+							.updateProfilePendingOwner(profileId, ZeroAddress)
+					)
+						.to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+						.withArgs()
+				})
+
+				it('Should revert if try to update the pending owner with the same owner', async () => {
+					await expect(
+						registry
+							.connect(educateth)
+							.updateProfilePendingOwner(profileId, educateth.address)
+					)
+						.to.be.revertedWithCustomError(registry, 'SAME_PROVIDER')
+						.withArgs()
+				})
+
+				it('Should update the pending owner', async () => {
+					const updateProfilePendingOwnerTx = await registry
+						.connect(educateth)
+						.updateProfilePendingOwner(profileId, julio.address)
+
+					await updateProfilePendingOwnerTx.wait()
+
+					const pendingOwner: string =
+						await registry.getPendingOwnerByProfileId(profileId)
+
+					expect(julio.address).to.equal(pendingOwner)
+				})
+
+				it('Should emit an event when the pending owner is updated', async () => {
+					await expect(
+						registry
+							.connect(educateth)
+							.updateProfilePendingOwner(profileId, oscar.address)
+					)
+						.to.emit(registry, 'ProfilePendingOwnerUpdated')
+						.withArgs(profileId, oscar.address)
+				})
+			})
+		})
+
+		describe('Ownership', async () => {
+			it('Should revert if an non-pending owner account tries to accept the ownership', async () => {
+				await expect(
+					registry.connect(santiago).acceptProfileOwnership(profileId)
+				)
+					.to.be.revertedWithCustomError(registry, 'NOT_PENDING_OWNER')
+					.withArgs()
+			})
+
+			it('Should emit an event when the ownership is accepted', async () => {
+				await expect(registry.connect(oscar).acceptProfileOwnership(profileId))
+					.to.emit(registry, 'ProfileOwnerUpdated')
+					.withArgs(profileId, oscar.address)
+			})
 		})
 
 		describe('Credits', async () => {
@@ -484,6 +777,50 @@ describe('Registry', function () {
 						})
 				).to.be.revertedWithCustomError(registry, 'NOT_HAVE_CEDRITS')
 			})
+		})
+	})
+
+	describe('Funds', async () => {
+		let native: string
+
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			registry = fixture.registry
+			seal = fixture.seal
+			santiago = fixture.santiago
+
+			native = await registry.NATIVE()
+
+			// await santiago.sendTransaction({
+			// 	to: await registry.getAddress(),
+			// 	value: ethers.parseEther('0.05')
+			// })
+		})
+
+		it('Should revert if an account tries to withdraw funds', async () => {
+			await expect(
+				registry.connect(santiago).recoverFunds(native, santiago.address)
+			)
+				.to.be.revertedWithCustomError(
+					registry,
+					'AccessControlUnauthorizedAccount'
+				)
+				.withArgs(santiago.address, ethers.id('SEAL_OWNER'))
+		})
+
+		it('Should revert if try to withdraw funds with a zero account', async () => {
+			await expect(registry.connect(seal).recoverFunds(native, ZeroAddress))
+				.to.be.revertedWithCustomError(registry, 'ZERO_ADDRESS')
+				.withArgs()
+		})
+
+		it('Should transfer funds', async () => {
+			await expect(
+				registry.connect(seal).recoverFunds(native, santiago.address)
+			).to.changeEtherBalances(
+				[santiago, registry],
+				[ethers.parseUnits('0', 'ether'), ethers.parseUnits('0', 'ether')]
+			)
 		})
 	})
 })

@@ -23,6 +23,12 @@ contract Errors {
 	// @notice Thrown when amount is zero or less
 	error INVALID_AMOUNT();
 
+	/// @notice Thrown when the address is the same
+	error SAME_PROVIDER();
+
+	/// @notice Thrown when the address is this contract address
+	error SAME_CONTRACT();
+
 	/// @notice Thrown when address is the zero address
 	error ZERO_ADDRESS();
 

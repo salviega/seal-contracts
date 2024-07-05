@@ -44,6 +44,7 @@ contract Registry is
 		address _attestationProvider
 	) external reinitializer(1) {
 		if (_owner == address(0)) revert ZERO_ADDRESS();
+		if (_attestationProvider == address(0)) revert ZERO_ADDRESS();
 
 		_updateAttestationProvider(_attestationProvider);
 		_grantRole(SEAL_OWNER, _owner);
@@ -52,11 +53,6 @@ contract Registry is
 	/// =========================
 	/// ======= Modifiers =======
 	/// =========================
-
-	modifier onlyAccountAuthorized(address _account) {
-		if (!authorizations[_account]) revert UNAUTHORIZED();
-		_;
-	}
 
 	modifier onlyAttestationProvider() {
 		if (msg.sender != attestationProvider) revert NOT_ATTESTATION_PROVIDER();
@@ -86,6 +82,12 @@ contract Registry is
 		bytes32 _profileId
 	) external view returns (uint256) {
 		return profiles[_profileId].credits;
+	}
+
+	function getPendingOwnerByProfileId(
+		bytes32 _profileId
+	) external view returns (address) {
+		return pendingOwners[_profileId];
 	}
 
 	function getProfileById(
@@ -165,7 +167,7 @@ contract Registry is
 		emit CreditsAddedToProfile(_profileId, _amount);
 	}
 
-	function addProfileManagers(
+	function addManagersToProfile(
 		bytes32 _profileId,
 		address[] memory _managers
 	) external onlyProfileOwner(_profileId) {
@@ -222,12 +224,17 @@ contract Registry is
 		_transferAmount(_token, _recipient, amount);
 	}
 
-	function removeManagers(
+	function removeManagersFromProfile(
 		bytes32 _profileId,
 		address[] memory _managers
 	) external onlyProfileOwner(_profileId) {
+		if (_managers.length == 0) revert EMPTY_ARRAY();
+
 		for (uint256 i; i < _managers.length; ) {
-			_revokeRole(_profileId, _managers[i]);
+			address manager = _managers[i];
+			if (manager == address(0)) revert ZERO_ADDRESS();
+
+			_revokeRole(_profileId, manager);
 			unchecked {
 				++i;
 			}
@@ -264,6 +271,9 @@ contract Registry is
 		bytes32 _profileId,
 		address _pendingOwner
 	) external onlyProfileOwner(_profileId) {
+		if (_pendingOwner == address(0)) revert ZERO_ADDRESS();
+		if (_pendingOwner == profiles[_profileId].owner) revert SAME_PROVIDER();
+
 		pendingOwners[_profileId] = _pendingOwner;
 
 		emit ProfilePendingOwnerUpdated(_profileId, _pendingOwner);
@@ -359,7 +369,7 @@ contract Registry is
 					keccak256(
 						abi.encodePacked(
 							bytes1(0xff),
-							address(this),
+							payable(address(this)),
 							salt,
 							keccak256(bytecode)
 						)
@@ -369,7 +379,7 @@ contract Registry is
 		);
 
 		// Try to deploy the anchor contract, if it fails then the anchor already exists
-		try new Anchor{salt: salt}(_profileId, address(this)) returns (
+		try new Anchor{salt: salt}(_profileId, payable(address(this))) returns (
 			Anchor _anchor
 		) {
 			anchor = address(_anchor);
@@ -409,6 +419,13 @@ contract Registry is
 
 	function _updateAttestationProvider(address _attestationProvider) internal {
 		if (_attestationProvider == address(0)) revert ZERO_ADDRESS();
+		if (_attestationProvider == address(this)) revert SAME_CONTRACT();
+		if (_attestationProvider == attestationProvider) revert SAME_PROVIDER();
+
 		attestationProvider = _attestationProvider;
+
+		emit AttestationProviderUpdated(_attestationProvider);
 	}
+
+	receive() external payable {}
 }
