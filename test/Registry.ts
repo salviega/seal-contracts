@@ -466,6 +466,62 @@ describe('Registry', function () {
 		})
 
 		describe('Managers', async () => {
+			describe('Is', async () => {
+				it('Should return true if the account is the owner', async () => {
+					const isOwner: boolean = await registry.isOwnerOfProfile(
+						profileId,
+						educateth.address
+					)
+
+					expect(true).to.equal(isOwner)
+				})
+
+				it('Should return false if the account is not the owner', async () => {
+					const isOwner: boolean = await registry.isOwnerOfProfile(
+						profileId,
+						julio.address
+					)
+
+					expect(false).to.equal(isOwner)
+				})
+
+				it('Should return true if the account is a manager', async () => {
+					const isManager: boolean = await registry.isMemberOfProfile(
+						profileId,
+						julio.address
+					)
+
+					expect(true).to.equal(isManager)
+				})
+
+				it('Should return false if the account is not a manager', async () => {
+					const isManager: boolean = await registry.isMemberOfProfile(
+						profileId,
+						santiago.address
+					)
+
+					expect(false).to.equal(isManager)
+				})
+
+				it('Should return true if the account is a manager or the owner', async () => {
+					const isEducatethManagerOrOwner: boolean =
+						await registry.isOwnerOfProfile(profileId, educateth.address)
+
+					const isJulioManagerOrOwner: boolean =
+						await registry.isOwnerOrMemberOfProfile(profileId, julio.address)
+
+					expect(true).to.equal(isJulioManagerOrOwner)
+					expect(true).to.equal(isEducatethManagerOrOwner)
+				})
+
+				it('Should return false if the account is not a manager or the owner', async () => {
+					const isSantiagoManagerOrOwner: boolean =
+						await registry.isOwnerOrMemberOfProfile(profileId, santiago.address)
+
+					expect(false).to.equal(isSantiagoManagerOrOwner)
+				})
+			})
+
 			describe('Add', async () => {
 				it('Should revert if an non-owner account tries to add a manager', async () => {
 					await expect(
