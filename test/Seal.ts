@@ -6,10 +6,10 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import assert from 'assert'
 import { expect } from 'chai'
 import { AbiCoder, BytesLike, Contract, ZeroAddress } from 'ethers'
-import hre, { ethers, upgrades } from 'hardhat'
+import hre, { deployments, ethers, upgrades } from 'hardhat'
 
 import {
-	CREATE_COURSE_TYPES,
+	CREATE__TYPES,
 	CREATE_PROFILE_TYPES,
 	EXTRA_DATA_TYPES
 } from '../constants/constants'
@@ -44,6 +44,12 @@ describe('Seal', function () {
 			await registry.getAddress()
 		])
 
+		const course = await hre.ethers.deployContract('Course', [
+			'',
+			'',
+			await seal.getAddress()
+		])
+
 		const organizationSchema: Schema = {
 			registrant: deployer.address,
 			revocale: false,
@@ -76,6 +82,7 @@ describe('Seal', function () {
 			sp,
 			registry,
 			seal,
+			course,
 			deployer,
 			educateth,
 			julio,
@@ -88,6 +95,7 @@ describe('Seal', function () {
 	let sp: Contract,
 		registry: Contract,
 		seal: Contract,
+		course: Contract,
 		deployer: HardhatEthersSigner,
 		educateth: HardhatEthersSigner,
 		julio: HardhatEthersSigner,
@@ -163,6 +171,51 @@ describe('Seal', function () {
 
 			await expect(updateRegistryTx)
 				.to.emit(seal, 'RegistryUpdated')
+				.withArgs(await registry.getAddress())
+		})
+	})
+
+	describe('UpdateStrategy', async () => {
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			sp = fixture.sp
+			registry = fixture.registry
+			seal = fixture.seal
+			course = fixture.course
+			deployer = fixture.deployer
+			educateth = fixture.educateth
+		})
+
+		it('Should revert if the caller is not the owner', async () => {
+			await expect(seal.connect(educateth).updateStrategy(ZeroAddress)).to.be
+				.reverted
+		})
+
+		it('Should revert if the new strategy is the zero address', async () => {
+			await expect(
+				seal.connect(deployer).updateStrategy(ZeroAddress)
+			).to.be.revertedWithCustomError(seal, 'ZERO_ADDRESS')
+		})
+
+		it('Should update the strategy', async () => {
+			const updateStrategyTx = await seal.updateStrategy(
+				await course.getAddress()
+			)
+
+			await updateStrategyTx.wait()
+
+			const updatedStrategyAddress: string = await seal.getStrategy()
+
+			expect(await course.getAddress()).to.equal(updatedStrategyAddress)
+		})
+
+		it('Should emit an event', async () => {
+			const updateStrategyTx = await seal.updateStrategy(
+				await registry.getAddress()
+			)
+
+			await expect(updateStrategyTx)
+				.to.emit(seal, 'CourseUpdated')
 				.withArgs(await registry.getAddress())
 		})
 	})
