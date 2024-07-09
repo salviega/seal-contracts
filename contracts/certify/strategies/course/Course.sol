@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import '../BaseCourse.sol';
-import '../../core/interfaces/ICertify.sol';
+import '../../core/interfaces/ISeal.sol';
 import '../../core/interfaces/IRegistry.sol';
 
 import 'hardhat/console.sol';
@@ -31,14 +31,14 @@ contract Course is
 	constructor(
 		string memory _name,
 		string memory _symbol,
-		address _certify
-	) BaseCourse(_certify) ERC721(_name, _symbol) {}
+		address _seal
+	) BaseCourse(_seal) ERC721(_name, _symbol) {}
 
 	// ====================================
 	// =========== Initializer ============
 	// ====================================
 
-	function initialize(uint256 _courseId) public override onlyCertify {
+	function initialize(uint256 _courseId) public override onlySeal {
 		__BaseStrategy_init(_courseId);
 
 		emit Initialized(_courseId);
@@ -51,7 +51,7 @@ contract Course is
 	function safeMint(
 		address _to,
 		string memory _uri
-	) external onlyCertify returns (uint256) {
+	) external onlySeal returns (uint256) {
 		uint256 tokenId = ++tokenIdCounter;
 
 		_safeMint(_to, tokenId);

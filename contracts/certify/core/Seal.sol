@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import 'solady/src/auth/Ownable.sol';
 import 'solady/src/tokens/ERC20.sol';
-import './interfaces/ICertify.sol';
+import './interfaces/ISeal.sol';
 import './interfaces/ICourse.sol';
 import './libraries/Clone.sol';
 import './libraries/Errors.sol';
@@ -13,7 +13,7 @@ import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 using ECDSA for bytes32;
 
-contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
+contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	// ==========================
 	// === Storage Variables ====
 	// ==========================
@@ -193,7 +193,7 @@ contract Certify is Initializable, Ownable, Errors, Native, Transfer, ICertify {
 
 		if (
 			newCourse.getCourseId() != courseId ||
-			address(newCourse.getCertify()) != address(this)
+			address(newCourse.getSeal()) != address(this)
 		) revert MISMATCH();
 
 		emit CourseCreated(

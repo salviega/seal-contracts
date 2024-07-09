@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import './ICourse.sol';
 import './IRegistry.sol';
 
-interface ICertify {
+interface ISeal {
 	/// ======================
 	/// ======= Structs ======
 	/// ======================

@@ -12,15 +12,15 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// === Storage Variables ====
 	/// ==========================
 
-	ICertify internal immutable certify;
+	ISeal internal immutable seal;
 	uint256 internal courseId;
 
 	/// ====================================
 	/// =========== Modifiers ==============
 	/// ====================================
 
-	modifier onlyCertify() {
-		_checkOnlyCertify();
+	modifier onlySeal() {
+		_checkOnlySeal();
 		_;
 	}
 
@@ -33,8 +33,8 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// ========== Constructor =============
 	/// ====================================
 
-	constructor(address _certify) {
-		certify = ICertify(_certify);
+	constructor(address _seal) {
+		seal = ISeal(_seal);
 	}
 
 	// ====================================
@@ -42,7 +42,7 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	// ====================================
 
 	/// @param _courseId ID of the pool
-	function __BaseStrategy_init(uint256 _courseId) internal virtual onlyCertify {
+	function __BaseStrategy_init(uint256 _courseId) internal virtual onlySeal {
 		// check if pool ID is not initialized already, if it is, revert
 		if (courseId != 0) revert ALREADY_INITIALIZED();
 
@@ -55,18 +55,15 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// ==== View Functions =====
 	/// =========================
 
-	function getCertify() external view override returns (ICertify) {
-		return certify;
+	function getSeal() external view override returns (ISeal) {
+		return seal;
 	}
 
 	function getCourseId() external view override returns (uint256) {
 		return courseId;
 	}
 
-	function recoverFunds(
-		address _token,
-		address _recipient
-	) external onlyCertify {
+	function recoverFunds(address _token, address _recipient) external onlySeal {
 		uint256 amount = _token == NATIVE
 			? address(this).balance
 			: ERC20(_token).balanceOf(address(this));
@@ -82,8 +79,8 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 		if (courseId == 0) revert NOT_INITIALIZED();
 	}
 
-	function _checkOnlyCertify() internal view {
-		if (msg.sender != address(certify)) revert UNAUTHORIZED();
+	function _checkOnlySeal() internal view {
+		if (msg.sender != address(seal)) revert UNAUTHORIZED();
 	}
 
 	/// ===================================

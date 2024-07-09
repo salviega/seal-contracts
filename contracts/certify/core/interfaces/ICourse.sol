@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './ICertify.sol';
+import './ISeal.sol';
 
 interface ICourse {
 	/// ======================
@@ -54,7 +54,7 @@ interface ICourse {
 	/// ==== View Functions =====
 	/// =========================
 
-	function getCertify() external view returns (ICertify);
+	function getSeal() external view returns (ISeal);
 
 	function getCourseId() external view returns (uint256);
 
