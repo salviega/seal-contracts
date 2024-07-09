@@ -219,4 +219,46 @@ describe('Seal', function () {
 				.withArgs(await registry.getAddress())
 		})
 	})
+
+	describe('Funds', async () => {
+		let native: string
+
+		before(async () => {
+			const fixture = await loadFixture(deployFixture)
+			seal = fixture.seal
+			deployer = fixture.deployer
+			santiago = fixture.santiago
+
+			native = await seal.NATIVE()
+
+			await santiago.sendTransaction({
+				to: await seal.getAddress(),
+				value: ethers.parseEther('0.05')
+			})
+		})
+
+		it('Should revert if an account tries to withdraw funds', async () => {
+			await expect(
+				seal.connect(santiago).recoverFunds(native, santiago.address)
+			).to.be.reverted
+		})
+
+		it('Should revert if try to withdraw funds with a zero account', async () => {
+			await expect(seal.connect(deployer).recoverFunds(native, ZeroAddress))
+				.to.be.revertedWithCustomError(seal, 'ZERO_ADDRESS')
+				.withArgs()
+		})
+
+		it('Should transfer funds', async () => {
+			await expect(
+				seal.connect(deployer).recoverFunds(native, santiago.address)
+			).to.changeEtherBalances(
+				[santiago, seal],
+				[
+					ethers.parseUnits('0.05', 'ether'),
+					ethers.parseUnits('-0.05', 'ether')
+				]
+			)
+		})
+	})
 })

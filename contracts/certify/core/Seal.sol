@@ -116,6 +116,8 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	}
 
 	function recoverFunds(address _token, address _recipient) external onlyOwner {
+		if (_recipient == address(0)) revert ZERO_ADDRESS();
+
 		uint256 amount = _token == NATIVE
 			? address(this).balance
 			: ERC20(_token).balanceOf(address(this));
@@ -226,4 +228,6 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		strategy = _strategy;
 		emit CourseUpdated(_strategy);
 	}
+
+	receive() external payable {}
 }
