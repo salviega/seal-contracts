@@ -13,7 +13,7 @@ import { Attestation } from '../models/attestation.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
-describe.skip('Registry', function () {
+describe('Registry', function () {
 	const abiCoder: AbiCoder = new ethers.AbiCoder()
 
 	async function deployFixture() {
@@ -847,10 +847,10 @@ describe.skip('Registry', function () {
 
 			native = await registry.NATIVE()
 
-			// await santiago.sendTransaction({
-			// 	to: await registry.getAddress(),
-			// 	value: ethers.parseEther('0.05')
-			// })
+			await santiago.sendTransaction({
+				to: await registry.getAddress(),
+				value: ethers.parseEther('0.05')
+			})
 		})
 
 		it('Should revert if an account tries to withdraw funds', async () => {
@@ -875,7 +875,10 @@ describe.skip('Registry', function () {
 				registry.connect(seal).recoverFunds(native, santiago.address)
 			).to.changeEtherBalances(
 				[santiago, registry],
-				[ethers.parseUnits('0', 'ether'), ethers.parseUnits('0', 'ether')]
+				[
+					ethers.parseUnits('0.05', 'ether'),
+					ethers.parseUnits('-0.05', 'ether')
+				]
 			)
 		})
 	})
