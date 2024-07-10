@@ -209,7 +209,7 @@ describe('Seal', function () {
 		})
 	})
 
-	describe('UpdateStrategy', async () => {
+	describe('Update strategy', async () => {
 		before(async () => {
 			const fixture = await loadFixture(deployFixture)
 			sp = fixture.sp

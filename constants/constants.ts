@@ -5,12 +5,3 @@ export const CREATE_COURSE_TYPES: string[] = [
 	'address[]',
 	'string[]'
 ]
-
-export const EXTRA_DATA_TYPES: string[] = [
-	'bytes32',
-	'address',
-	'address[]',
-	'bool',
-	'uint256',
-	'address[]'
-]

@@ -13,7 +13,7 @@ import { Attestation } from '../models/attestation.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
-describe.skip('Registry', function () {
+describe('Registry', function () {
 	const abiCoder: AbiCoder = new ethers.AbiCoder()
 
 	async function deployFixture() {

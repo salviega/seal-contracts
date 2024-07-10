@@ -9,8 +9,6 @@ import '../BaseCourse.sol';
 import '../../core/interfaces/ISeal.sol';
 import '../../core/interfaces/IRegistry.sol';
 
-import 'hardhat/console.sol';
-
 contract Course is
 	BaseCourse,
 	ERC721,
@@ -40,7 +38,6 @@ contract Course is
 
 	function initialize(uint256 _courseId) public override onlySeal {
 		__BaseStrategy_init(_courseId);
-
 		emit Initialized(_courseId);
 	}
 
@@ -53,11 +50,8 @@ contract Course is
 		string memory _uri
 	) external onlySeal returns (uint256) {
 		uint256 tokenId = ++tokenIdCounter;
-
 		_safeMint(_to, tokenId);
-
 		_setTokenURI(tokenId, _uri);
-
 		return tokenId;
 	}
 

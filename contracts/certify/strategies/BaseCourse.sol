@@ -41,7 +41,6 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	// =========== Initializer ============
 	// ====================================
 
-	/// @param _courseId ID of the pool
 	function __BaseStrategy_init(uint256 _courseId) internal virtual onlySeal {
 		// check if pool ID is not initialized already, if it is, revert
 		if (courseId != 0) revert ALREADY_INITIALIZED();

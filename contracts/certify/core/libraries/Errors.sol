@@ -55,7 +55,7 @@ contract Errors {
 	error ANCHOR_ERROR();
 
 	/// =========================
-	/// ======== Certify ========
+	/// ========  Seal ==========
 	/// =========================
 
 	/// @notice Thrown when sender is not attestation provider
