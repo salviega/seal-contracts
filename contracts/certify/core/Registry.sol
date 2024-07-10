@@ -11,8 +11,6 @@ import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
-import 'hardhat/console.sol';
-
 contract Registry is
 	Initializable,
 	AccessControlUpgradeable,
@@ -329,7 +327,6 @@ contract Registry is
 			address manager = _managers[i];
 
 			if (manager == address(0)) revert ZERO_ADDRESS();
-
 			_grantRole(profileId, manager);
 			unchecked {
 				++i;

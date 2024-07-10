@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import 'solady/src/auth/Ownable.sol';
 import 'solady/src/tokens/ERC20.sol';
@@ -11,7 +10,6 @@ import './libraries/Clone.sol';
 import './libraries/Errors.sol';
 import './libraries/Native.sol';
 import './libraries/Transfer.sol';
-using ECDSA for bytes32;
 
 contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	// ==========================
@@ -46,15 +44,6 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	modifier onlyAttestationProvider() {
 		if (msg.sender != registry.getAttestationProvider())
 			revert NOT_ATTESTATION_PROVIDER();
-		_;
-	}
-
-	modifier verifySignature(
-		address _signer,
-		bytes32 _hash,
-		bytes memory _signature
-	) {
-		_checkSigner(_signer, _hash, _signature);
 		_;
 	}
 
@@ -93,6 +82,8 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 			revert INSUFFICIENT_CREDITS();
 		}
 
+		if (recipients.length == 0) revert EMPTY_ARRAY();
+
 		registry.getProfileById(profileId).credits -= recipients.length;
 
 		Course memory course = _createCourse(
@@ -102,11 +93,11 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 			recipients.length
 		);
 
-		if (recipients.length == 0) revert EMPTY_ARRAY();
-
 		if (recipients.length != uris.length) revert MISMATCH();
 
 		for (uint256 i; i < recipients.length; ) {
+			if (recipients[i] == address(0)) revert ZERO_ADDRESS();
+
 			course.course.safeMint(recipients[i], uris[i]);
 
 			unchecked {
@@ -145,27 +136,9 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		courses[_courseId].course.recoverFunds(_token, _recipient);
 	}
 
-	function safeMint(
-		uint256 _courseId,
-		bytes32 _hash,
-		bytes memory _signature,
-		string calldata _uri
-	) external verifySignature(msg.sender, _hash, _signature) {
-		_safeMint(_courseId, msg.sender, _uri);
-	}
-
 	/// ====================================
 	/// ======= Internal Functions =========
 	/// ====================================
-
-	function _checkSigner(
-		address _signer,
-		bytes32 _hash,
-		bytes memory _signature
-	) internal pure {
-		bool isSigner = _hash.recover(_signature) == _signer;
-		if (!isSigner) revert UNAUTHORIZED();
-	}
 
 	function _createCourse(
 		bytes32 _profileId,

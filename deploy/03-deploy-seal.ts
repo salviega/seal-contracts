@@ -15,7 +15,7 @@ import {
 import { saveUpgradeableContractDeploymentInfo } from '../helpers/upgrades/save-upgradeable-contract-deployment-info.ts'
 import { verify } from '../helpers/verify.ts'
 
-const deployCertify: DeployFunction = async function (
+const deploySeal: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
 	const { getNamedAccounts, deployments, network } = hre
@@ -28,11 +28,11 @@ const deployCertify: DeployFunction = async function (
 	const args: any[] = [deployer, registry.address]
 
 	log('-----------------------------------')
-	log('Deploying Certify...')
+	log('Deploying Seal...')
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const Registry: ContractFactory<any[], Contract> =
-		await ethers.getContractFactory('Certify')
+		await ethers.getContractFactory('Seal')
 
 	const proxy: Contract = await upgrades.deployProxy(Registry, args)
 	await proxy.waitForDeployment()
@@ -44,28 +44,28 @@ const deployCertify: DeployFunction = async function (
 		throw new Error('No deployment transaction found')
 	}
 
-	log(`Certify transaction hash: ${proxyTransaction.hash}`)
+	log(`Seal transaction hash: ${proxyTransaction.hash}`)
 
 	const proxyAddress: string = await proxy.getAddress()
-	log(`Certify proxy deployed at: ${proxyAddress}`)
+	log(`Seal proxy deployed at: ${proxyAddress}`)
 
 	const implementationAddress: string =
 		await getImplementationAddress(proxyAddress)
-	log(`Certify implementation deployed at: ${implementationAddress}`)
+	log(`Seal implementation deployed at: ${implementationAddress}`)
 
 	const proxyAdmin: string = await getProxyAdmin(proxyAddress)
-	log(`Certify proxy admin: ${proxyAdmin}`)
+	log(`Seal proxy admin: ${proxyAdmin}`)
 
 	if (!developmentChains.includes(network.name)) {
 		await verify(proxyAddress, [])
 	}
 
 	const artifact: ExtendedArtifact =
-		await deployments.getExtendedArtifact('Certify')
-	await save('Certify', { address: proxyAddress, ...artifact })
+		await deployments.getExtendedArtifact('Seal')
+	await save('Seal', { address: proxyAddress, ...artifact })
 
-	await saveUpgradeableContractDeploymentInfo('Certify', proxy)
+	await saveUpgradeableContractDeploymentInfo('Seal', proxy)
 }
 
-deployCertify.tags = ['all', 'Certify']
-export default deployCertify
+deploySeal.tags = ['all', 'Seal']
+export default deploySeal

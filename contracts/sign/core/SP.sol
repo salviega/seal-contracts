@@ -12,6 +12,8 @@ import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/Messa
 import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import {OwnableUpgradeable} from '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
+import 'hardhat/console.sol';
+
 // solhint-disable var-name-mixedcase
 contract SP is ISP, UUPSUpgradeable, OwnableUpgradeable {
 	/// @custom:storage-location erc7201:ethsign.SP

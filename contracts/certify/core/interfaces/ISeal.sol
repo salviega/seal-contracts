@@ -78,11 +78,4 @@ interface ISeal {
 		address _token,
 		address _recipient
 	) external;
-
-	function safeMint(
-		uint256 _courseId,
-		bytes32 _hash,
-		bytes memory _signature,
-		string calldata _uri
-	) external;
 }
