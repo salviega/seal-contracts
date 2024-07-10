@@ -180,14 +180,6 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		);
 	}
 
-	function _safeMint(
-		uint256 _courseId,
-		address _to,
-		string calldata _uri
-	) internal {
-		courses[_courseId].course.safeMint(_to, _uri);
-	}
-
 	function _updateRegistry(address _registry) internal {
 		if (_registry == address(0)) revert ZERO_ADDRESS();
 

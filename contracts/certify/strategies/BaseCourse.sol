@@ -85,4 +85,6 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// ===================================
 	/// ============== Hooks ==============
 	/// ===================================
+
+	receive() external payable {}
 }

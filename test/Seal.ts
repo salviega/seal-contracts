@@ -255,6 +255,7 @@ describe('Seal', function () {
 		const delegateSignature: BytesLike = '0x'
 
 		let profileId: BytesLike
+		let courseId: number
 
 		before(async () => {
 			const fixture = await loadFixture(deployFixture)
@@ -410,12 +411,12 @@ describe('Seal', function () {
 
 		it('Should create a course', async () => {
 			const wallets = []
-			for (let i = 0; i < 100; i++) {
+			for (let i = 0; i <= 50; i++) {
 				wallets.push(ethers.Wallet.createRandom().address)
 			}
 
 			const uris = []
-			for (let i = 1; i <= 100; i++) {
+			for (let i = 0; i <= 50; i++) {
 				uris.push(i.toString())
 			}
 
@@ -435,7 +436,7 @@ describe('Seal', function () {
 
 			await attestTx.wait()
 
-			const [courseId, oldProfileId, attestationId, address, credits] =
+			const [id, oldProfileId, attestationId, address, credits] =
 				await getEvetnArgs(attestTx.hash, seal, 'CourseCreated', 'all')
 
 			const course: Course = {
@@ -445,8 +446,10 @@ describe('Seal', function () {
 				credits
 			}
 
-			const courseContract = await seal.connect(deployer).getCourse(courseId)
+			const courseContract = await seal.connect(deployer).getCourse(id)
 			const mappedCourse: Course = courseContractToCourse(courseContract)
+
+			courseId = id
 
 			expect(course).to.deep.equal(mappedCourse)
 		})
@@ -472,6 +475,57 @@ describe('Seal', function () {
 			await expect(attestTx)
 				.to.emit(seal, 'CourseCreated')
 				.withArgs(courseId, oldProfileId, attestationId, address, credits)
+		})
+
+		describe('Funds', async () => {
+			let native: string
+			let course: Course
+			let courseDeployed: Contract
+
+			before(async () => {
+				native = await seal.NATIVE()
+
+				const courseContract = await seal.connect(deployer).getCourse(courseId)
+				const mappedCourse: Course = courseContractToCourse(courseContract)
+
+				course = mappedCourse
+				course.id = courseId
+
+				await santiago.sendTransaction({
+					to: mappedCourse.course,
+					value: ethers.parseEther('0.05')
+				})
+
+				courseDeployed = await hre.ethers.getContractAt('Course', course.course)
+			})
+
+			it('Should revert if an account tries to withdraw funds', async () => {
+				await expect(
+					seal
+						.connect(santiago)
+						.recoverFundsOfCourse(course.id, native, santiago.address)
+				).to.be.reverted
+			})
+
+			it('Should revert if an account tries to withdraw funds directly of the course', async () => {
+				await expect(
+					courseDeployed.connect(santiago).recoverFunds(native, course.course)
+				).to.be.revertedWithCustomError(courseDeployed, 'UNAUTHORIZED')
+			})
+
+			it('Should recover funds', async () => {
+				await expect(
+					seal
+						.connect(deployer)
+						.recoverFundsOfCourse(course.id, native, santiago.address)
+				).to.changeEtherBalances(
+					[santiago, courseDeployed],
+					[
+						ethers.parseUnits('0.05', 'ether'),
+						ethers.parseUnits('-0.05', 'ether')
+					]
+				)
+			})
 		})
 	})
 
