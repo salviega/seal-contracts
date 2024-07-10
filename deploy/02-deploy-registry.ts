@@ -1,11 +1,7 @@
 import { Contract, ContractFactory, ContractTransactionResponse } from 'ethers'
 import { ethers, upgrades } from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import {
-	DeployFunction,
-	Deployment,
-	ExtendedArtifact
-} from 'hardhat-deploy/dist/types'
+import { DeployFunction, ExtendedArtifact } from 'hardhat-deploy/dist/types'
 
 import { SIGN_ADDRESS } from '../constants/addresses.ts'
 import { developmentChains } from '../helper-hardhat-config.ts'

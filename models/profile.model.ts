@@ -1,5 +1,3 @@
-import { BytesLike } from 'ethers'
-
 export interface Profile {
 	attestationId?: number
 	nonce: number

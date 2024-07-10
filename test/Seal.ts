@@ -1,26 +1,19 @@
-import {
-	HardhatEthersSigner,
-	SignerWithAddress
-} from '@nomicfoundation/hardhat-ethers/signers'
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import assert from 'assert'
 import { expect } from 'chai'
 import { AbiCoder, BytesLike, Contract, ZeroAddress } from 'ethers'
-import hre, { deployments, ethers, upgrades } from 'hardhat'
+import hre, { ethers, upgrades } from 'hardhat'
 
 import {
 	CREATE_COURSE_TYPES,
-	CREATE_PROFILE_TYPES,
-	EXTRA_DATA_TYPES
+	CREATE_PROFILE_TYPES
 } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
 import { getEvetnArgs } from '../helpers/get-events-args'
 import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
-import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Course } from '../models/course.model'
-import { ExtraData } from '../models/extradata.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
