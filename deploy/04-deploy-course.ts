@@ -18,10 +18,10 @@ const deployCourse: DeployFunction = async function (
 	const { deployer } = await getNamedAccounts()
 
 	const deployerSigner: HardhatEthersSigner = await ethers.getSigner(deployer)
-	const certifyDeployment: Deployment = await get('Certify')
+	const sealDeployment: Deployment = await get('Seal')
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const args: any[] = ['xxx', 'xxx', certifyDeployment.address]
+	const args: any[] = ['xxx', 'xxx', sealDeployment.address]
 
 	log('-----------------------------------')
 	log('Deploying Course...')
@@ -37,14 +37,14 @@ const deployCourse: DeployFunction = async function (
 		await verify(courseDeployment.address, args)
 	}
 
-	const certify: Contract = await ethers.getContractAt(
-		'Certify',
-		certifyDeployment.address,
+	const seal: Contract = await ethers.getContractAt(
+		'Seal',
+		sealDeployment.address,
 		deployerSigner
 	)
 
-	log('Adding Course to Certify...')
-	await certify.updateStrategy(courseDeployment.address)
+	log('Adding Course to Seal...')
+	await seal.updateStrategy(courseDeployment.address)
 }
 
 deployCourse.tags = ['all', 'Course']
