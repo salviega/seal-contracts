@@ -48,7 +48,9 @@ interface ISeal {
 	/// ==== View Functions =====
 	/// =========================
 
-	function getCourse(uint256 _courseId) external view returns (Course memory);
+	function getCourseById(
+		uint256 _courseId
+	) external view returns (Course memory);
 
 	function getRegistry() external view returns (IRegistry);
 

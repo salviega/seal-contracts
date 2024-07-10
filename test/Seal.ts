@@ -446,7 +446,7 @@ describe('Seal', function () {
 				credits
 			}
 
-			const courseContract = await seal.connect(deployer).getCourse(id)
+			const courseContract = await seal.connect(deployer).getCourseById(id)
 			const mappedCourse: Course = courseContractToCourse(courseContract)
 
 			courseId = id
@@ -485,7 +485,9 @@ describe('Seal', function () {
 			before(async () => {
 				native = await seal.NATIVE()
 
-				const courseContract = await seal.connect(deployer).getCourse(courseId)
+				const courseContract = await seal
+					.connect(deployer)
+					.getCourseById(courseId)
 				const mappedCourse: Course = courseContractToCourse(courseContract)
 
 				course = mappedCourse

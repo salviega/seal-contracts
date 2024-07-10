@@ -20,6 +20,7 @@ import { DataLocation } from '../constants/enums'
  */
 
 export interface Attestation {
+	id?: number
 	schemaId: number
 	linkedAttestationId: number // 0
 	attestTimestamp: number // 0

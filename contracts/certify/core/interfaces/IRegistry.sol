@@ -68,28 +68,32 @@ interface IRegistry {
 		view
 		returns (address attestationProtocol);
 
-	function getProfileById(
-		bytes32 _profileId
-	) external view returns (Profile memory profile);
-
 	function getCreditsByProfileId(
 		bytes32 _profileId
 	) external view returns (uint256 credits);
 
-	function isOwnerOrMemberOfProfile(
+	function getProfileById(
+		bytes32 _profileId
+	) external view returns (Profile memory profile);
+
+	function getProfileIdByAnchor(
+		address _anchor
+	) external view returns (bytes32 profileId);
+
+	function isManagerOfProfile(
 		bytes32 _profileId,
-		address _account
-	) external view returns (bool isOwnerOrMemberOfProfile);
+		address _manager
+	) external view returns (bool isManagerOfProfile);
 
 	function isOwnerOfProfile(
 		bytes32 _profileId,
 		address _owner
 	) external view returns (bool isOwnerOfProfile);
 
-	function isMemberOfProfile(
+	function isOwnerOrManagerOfProfile(
 		bytes32 _profileId,
-		address _member
-	) external view returns (bool isMemberOfProfile);
+		address _account
+	) external view returns (bool isOwnerOrManagerOfProfile);
 
 	/// =================================
 	/// == External / Public Functions ==

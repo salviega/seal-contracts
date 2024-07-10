@@ -94,17 +94,23 @@ contract Registry is
 		return profiles[_profileId];
 	}
 
+	function getProfileIdByAnchor(
+		address _anchor
+	) external view returns (bytes32) {
+		return profileIds[_anchor];
+	}
+
 	function isAuthorizedToCreateProfile(
 		address _account
 	) external view returns (bool) {
 		return _isAuthorizedToCreateProfile(_account);
 	}
 
-	function isMemberOfProfile(
+	function isManagerOfProfile(
 		bytes32 _profileId,
-		address _member
+		address _manager
 	) external view returns (bool) {
-		return _isMemberOfProfile(_profileId, _member);
+		return _isManagerOfProfile(_profileId, _manager);
 	}
 
 	function isOwnerOfProfile(
@@ -114,13 +120,13 @@ contract Registry is
 		return _isOwnerOfProfile(_profileId, _owner);
 	}
 
-	function isOwnerOrMemberOfProfile(
+	function isOwnerOrManagerOfProfile(
 		bytes32 _profileId,
 		address _account
 	) external view returns (bool) {
 		return
 			_isOwnerOfProfile(_profileId, _account) ||
-			_isMemberOfProfile(_profileId, _account);
+			_isManagerOfProfile(_profileId, _account);
 	}
 
 	/// =================================
@@ -173,10 +179,10 @@ contract Registry is
 
 		for (uint256 i; i < _managers.length; ) {
 			address manager = _managers[i];
-
 			if (manager == address(0)) revert ZERO_ADDRESS();
 
 			_grantRole(_profileId, manager);
+
 			unchecked {
 				++i;
 			}
@@ -192,22 +198,6 @@ contract Registry is
 
 		authorizations[_account] = _status;
 		emit AccountAuthorizedToCreateProfile(_account, _status);
-	}
-
-	// This function is called by the attestor contract
-
-	function didReceiveAttestation(
-		address _attester,
-		uint64,
-		uint64 attestationId,
-		bytes calldata extraData
-	) external payable onlyAttestationProvider {
-		(uint256 nouce, string memory name, address[] memory managers) = abi.decode(
-			extraData,
-			(uint256, string, address[])
-		);
-
-		_createProfile(attestationId, nouce, name, _attester, managers);
 	}
 
 	function recoverFunds(
@@ -277,6 +267,22 @@ contract Registry is
 		emit ProfilePendingOwnerUpdated(_profileId, _pendingOwner);
 	}
 
+	// This function is called by the attestor contract
+
+	function didReceiveAttestation(
+		address _attester,
+		uint64,
+		uint64 attestationId,
+		bytes calldata extraData
+	) external payable onlyAttestationProvider {
+		(uint256 nouce, string memory name, address[] memory managers) = abi.decode(
+			extraData,
+			(uint256, string, address[])
+		);
+
+		_createProfile(attestationId, nouce, name, _attester, managers);
+	}
+
 	/// =========================
 	/// == Internal Functions ===
 	/// =========================
@@ -325,9 +331,10 @@ contract Registry is
 
 		for (uint256 i; i < _managers.length; ) {
 			address manager = _managers[i];
-
 			if (manager == address(0)) revert ZERO_ADDRESS();
+
 			_grantRole(profileId, manager);
+
 			unchecked {
 				++i;
 			}
@@ -400,11 +407,11 @@ contract Registry is
 		return authorizations[_account];
 	}
 
-	function _isMemberOfProfile(
+	function _isManagerOfProfile(
 		bytes32 _profileId,
-		address _member
+		address _manager
 	) internal view returns (bool) {
-		return hasRole(_profileId, _member);
+		return hasRole(_profileId, _manager);
 	}
 
 	function _isOwnerOfProfile(
@@ -416,11 +423,8 @@ contract Registry is
 
 	function _updateAttestationProvider(address _attestationProvider) internal {
 		if (_attestationProvider == address(0)) revert ZERO_ADDRESS();
-		if (_attestationProvider == address(this)) revert SAME_CONTRACT();
-		if (_attestationProvider == attestationProvider) revert SAME_PROVIDER();
 
 		attestationProvider = _attestationProvider;
-
 		emit AttestationProviderUpdated(_attestationProvider);
 	}
 

@@ -128,24 +128,6 @@ describe('Registry', function () {
 				.withArgs()
 		})
 
-		it('Should revert if try to update the attestation provider with the Register contract', async () => {
-			await expect(
-				registry
-					.connect(seal)
-					.updateAttestationProvider(await registry.getAddress())
-			)
-				.to.be.revertedWithCustomError(registry, 'SAME_CONTRACT')
-				.withArgs()
-		})
-
-		it('Should revert if try to update the same attestation provider', async () => {
-			await expect(
-				registry.connect(seal).updateAttestationProvider(await sp.getAddress())
-			)
-				.to.be.revertedWithCustomError(registry, 'SAME_PROVIDER')
-				.withArgs()
-		})
-
 		it('Should update the attestation provider', async () => {
 			const updateAttestationProviderTx = await registry
 				.connect(seal)
@@ -486,7 +468,7 @@ describe('Registry', function () {
 				})
 
 				it('Should return true if the account is a manager', async () => {
-					const isManager: boolean = await registry.isMemberOfProfile(
+					const isManager: boolean = await registry.isManagerOfProfile(
 						profileId,
 						julio.address
 					)
@@ -495,7 +477,7 @@ describe('Registry', function () {
 				})
 
 				it('Should return false if the account is not a manager', async () => {
-					const isManager: boolean = await registry.isMemberOfProfile(
+					const isManager: boolean = await registry.isManagerOfProfile(
 						profileId,
 						santiago.address
 					)
@@ -508,7 +490,7 @@ describe('Registry', function () {
 						await registry.isOwnerOfProfile(profileId, educateth.address)
 
 					const isJulioManagerOrOwner: boolean =
-						await registry.isOwnerOrMemberOfProfile(profileId, julio.address)
+						await registry.isOwnerOrManagerOfProfile(profileId, julio.address)
 
 					expect(true).to.equal(isJulioManagerOrOwner)
 					expect(true).to.equal(isEducatethManagerOrOwner)
@@ -516,7 +498,10 @@ describe('Registry', function () {
 
 				it('Should return false if the account is not a manager or the owner', async () => {
 					const isSantiagoManagerOrOwner: boolean =
-						await registry.isOwnerOrMemberOfProfile(profileId, santiago.address)
+						await registry.isOwnerOrManagerOfProfile(
+							profileId,
+							santiago.address
+						)
 
 					expect(false).to.equal(isSantiagoManagerOrOwner)
 				})

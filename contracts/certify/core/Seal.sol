@@ -12,18 +12,16 @@ import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
 contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
-	// ==========================
-	// === Storage Variables ====
-	// ==========================
+	/// =========================
+	/// === Storage Variables ===
+	/// =========================
 
 	mapping(address => uint256) private nonces;
 	mapping(uint256 => Course) private courses;
 
-	address private strategy;
-
-	IRegistry private registry;
-
-	uint256 private courseIdCounter;
+	address public strategy;
+	IRegistry public registry;
+	uint256 public courseIdCounter;
 
 	/// =========================
 	/// ====== Initializer ======
@@ -33,13 +31,16 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		address _owner,
 		address _registry
 	) external reinitializer(1) {
+		if (_owner == address(0)) revert ZERO_ADDRESS();
+		if (_registry == address(0)) revert ZERO_ADDRESS();
+
 		_initializeOwner(_owner);
 		_updateRegistry(_registry);
 	}
 
-	// ====================================
-	// =========== Modifier ===============
-	// ====================================
+	/// =========================
+	/// ======= Modifiers =======
+	/// =========================
 
 	modifier onlyAttestationProvider() {
 		if (msg.sender != registry.getAttestationProvider())
@@ -51,7 +52,9 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	// ==== View Functions =====
 	// =========================
 
-	function getCourse(uint256 _courseId) external view returns (Course memory) {
+	function getCourseById(
+		uint256 _courseId
+	) external view returns (Course memory) {
 		return courses[_courseId];
 	}
 
@@ -66,6 +69,24 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	/// =================================
 	/// == External / Public Functions ==
 	/// =================================
+
+	function recoverFunds(address _token, address _recipient) external onlyOwner {
+		if (_recipient == address(0)) revert ZERO_ADDRESS();
+
+		uint256 amount = _token == NATIVE
+			? address(this).balance
+			: ERC20(_token).balanceOf(address(this));
+
+		_transferAmount(_token, _recipient, amount);
+	}
+
+	function updateRegistry(address _registry) external onlyOwner {
+		_updateRegistry(_registry);
+	}
+
+	function updateStrategy(address _strategy) external onlyOwner {
+		_updateStrategy(_strategy);
+	}
 
 	// This function is called by the attestor contract
 
@@ -106,24 +127,6 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		}
 	}
 
-	function recoverFunds(address _token, address _recipient) external onlyOwner {
-		if (_recipient == address(0)) revert ZERO_ADDRESS();
-
-		uint256 amount = _token == NATIVE
-			? address(this).balance
-			: ERC20(_token).balanceOf(address(this));
-
-		_transferAmount(_token, _recipient, amount);
-	}
-
-	function updateRegistry(address _registry) external onlyOwner {
-		_updateRegistry(_registry);
-	}
-
-	function updateStrategy(address _strategy) external onlyOwner {
-		_updateStrategy(_strategy);
-	}
-
 	// ====================================
 	// ======= Strategy Functions =========
 	// ====================================
@@ -146,7 +149,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		uint64 _attestationId,
 		uint256 _credits
 	) internal returns (Course memory course) {
-		if (!registry.isOwnerOrMemberOfProfile(_profileId, _attester))
+		if (!registry.isOwnerOrManagerOfProfile(_profileId, _attester))
 			revert UNAUTHORIZED();
 
 		uint256 courseId = ++courseIdCounter;
