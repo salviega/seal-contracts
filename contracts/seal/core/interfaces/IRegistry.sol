@@ -30,6 +30,8 @@ interface IRegistry {
 
 	event CreditsAddedToProfile(bytes32 indexed profileId, uint256 amount);
 
+	event CreditsReduced(bytes32 indexed profileId, uint256 amount);
+
 	event ProfileCreated(
 		uint64 indexed attestationId,
 		bytes32 indexed id,
@@ -116,6 +118,8 @@ interface IRegistry {
 		uint64,
 		bytes calldata extraData
 	) external payable;
+
+	function reduceCredits(bytes32 _profileId, uint256 _amount) external;
 
 	function removeManagersFromProfile(
 		bytes32 _profileId,

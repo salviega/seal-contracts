@@ -12,6 +12,7 @@ import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
 import { getEvetnArgs } from '../helpers/get-events-args'
 import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
+import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Course } from '../models/course.model'
 import { Profile } from '../models/profile.model'
@@ -256,6 +257,7 @@ describe('Seal', function () {
 
 		let profileId: BytesLike
 		let courseId: number
+		let attestCourseTx: any
 
 		before(async () => {
 			const fixture = await loadFixture(deployFixture)
@@ -426,7 +428,7 @@ describe('Seal', function () {
 				uris
 			])
 
-			const attestTx = await sp
+			attestCourseTx = await sp
 				.connect(educateth)
 				[
 					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
@@ -434,10 +436,10 @@ describe('Seal', function () {
 					value: resolverFeesETH
 				})
 
-			await attestTx.wait()
+			await attestCourseTx.wait()
 
 			const [id, oldProfileId, attestationId, address, credits] =
-				await getEvetnArgs(attestTx.hash, seal, 'CourseCreated', 'all')
+				await getEvetnArgs(attestCourseTx.hash, seal, 'CourseCreated', 'all')
 
 			const course: Course = {
 				profileId: oldProfileId,
@@ -452,6 +454,49 @@ describe('Seal', function () {
 			courseId = id
 
 			expect(course).to.deep.equal(mappedCourse)
+		})
+
+		describe('Reduce credits', async () => {
+			it('Should reduce the credits of the profile', async () => {
+				const [, eventProfileId, , , eventCredits] = await getEvetnArgs(
+					attestCourseTx.hash,
+					seal,
+					'CourseCreated',
+					'all'
+				)
+
+				const profileCredits: bigint =
+					await registry.getCreditsByProfileId(eventProfileId)
+
+				const reduceCreditsTx = await registry
+					.connect(deployer)
+					.reduceCredits(profileId, eventCredits)
+
+				await reduceCreditsTx.wait()
+
+				const profile: Profile = profileContractToProfile(
+					await registry.connect(deployer).getProfileById(profileId)
+				)
+
+				expect(profile.credits).to.equal(profileCredits - eventCredits)
+			})
+
+			it('emit an event', async () => {
+				const [, , , , eventCredits] = await getEvetnArgs(
+					attestCourseTx.hash,
+					seal,
+					'CourseCreated',
+					'all'
+				)
+
+				const reduceCreditsTx = await registry
+					.connect(deployer)
+					.reduceCredits(profileId, eventCredits)
+
+				await expect(reduceCreditsTx)
+					.to.emit(registry, 'CreditsReduced')
+					.withArgs(profileId, eventCredits)
+			})
 		})
 
 		it('Should emit an event', async () => {

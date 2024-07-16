@@ -447,6 +447,8 @@ describe('Registry', function () {
 			expect(profile).to.deep.equal(mappedProfile)
 		})
 
+		// TODO: tests to revert reductions in credits
+
 		describe('Managers', async () => {
 			describe('Is', async () => {
 				it('Should return true if the account is the owner', async () => {

@@ -88,16 +88,16 @@ contract Registry is
 		return pendingOwners[_profileId];
 	}
 
-	function getProfileById(
-		bytes32 _profileId
-	) external view returns (Profile memory) {
-		return profiles[_profileId];
-	}
-
 	function getProfileIdByAnchor(
 		address _anchor
 	) external view returns (bytes32) {
 		return profileIds[_anchor];
+	}
+
+	function getProfileById(
+		bytes32 _profileId
+	) external view returns (Profile memory) {
+		return profiles[_profileId];
 	}
 
 	function isAuthorizedToCreateProfile(
@@ -210,6 +210,20 @@ contract Registry is
 			? address(this).balance
 			: ERC20(_token).balanceOf(address(this));
 		_transferAmount(_token, _recipient, amount);
+	}
+
+	function reduceCredits(
+		bytes32 _profileId,
+		uint256 _amount
+	) external onlyRole(SEAL_OWNER) {
+		if (_amount < 1) revert INVALID_AMOUNT();
+
+		Profile storage profile = profiles[_profileId];
+		if (profile.owner == address(0)) revert PROFILE_NOT_FOUND();
+		if (profile.credits < _amount) revert INSUFFICIENT_CREDITS();
+		profile.credits -= _amount;
+
+		emit CreditsReduced(_profileId, _amount);
 	}
 
 	function removeManagersFromProfile(

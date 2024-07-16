@@ -99,13 +99,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		(bytes32 profileId, address[] memory recipients, string[] memory uris) = abi
 			.decode(extraData, (bytes32, address[], string[]));
 
-		if (registry.getProfileById(profileId).credits < recipients.length) {
-			revert INSUFFICIENT_CREDITS();
-		}
-
 		if (recipients.length == 0) revert EMPTY_ARRAY();
-
-		registry.getProfileById(profileId).credits -= recipients.length;
 
 		Course memory course = _createCourse(
 			profileId,
