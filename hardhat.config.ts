@@ -12,7 +12,7 @@ import 'hardhat-gas-reporter'
 import 'solidity-coverage'
 
 const envFile =
-	process.env.NODE_ENV === 'production' ? '.env.mainnet' : '.env.testnet'
+	process.env.NODE_ENV === 'production' ? '.env.production' : '.env.testnet'
 
 if (fs.existsSync(path.resolve(__dirname, envFile))) {
 	dotenv.config({ path: envFile })
@@ -49,7 +49,7 @@ const ACCOUNTS = [WALLET_PRIVATE_KEY]
 const SOLC_SETTING = {
 	optimizer: {
 		enabled: true,
-		runs: 50
+		runs: 200
 	}
 }
 

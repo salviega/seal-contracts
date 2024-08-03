@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol';
-import 'solady/src/tokens/ERC20.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import './Anchor.sol';
 import './interfaces/IRegistry.sol';
 import './libraries/Errors.sol';
@@ -12,13 +12,13 @@ import './libraries/Native.sol';
 import './libraries/Transfer.sol';
 
 contract Registry is
-	Initializable,
-	AccessControlUpgradeable,
-	MulticallUpgradeable,
+	IRegistry,
 	Errors,
 	Native,
 	Transfer,
-	IRegistry
+	Initializable,
+	AccessControlUpgradeable,
+	MulticallUpgradeable
 {
 	/// =========================
 	/// === Storage Variables ===
@@ -208,7 +208,7 @@ contract Registry is
 
 		uint256 amount = _token == NATIVE
 			? address(this).balance
-			: ERC20(_token).balanceOf(address(this));
+			: IERC20(_token).balanceOf(address(this));
 		_transferAmount(_token, _recipient, amount);
 	}
 
