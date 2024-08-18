@@ -10,7 +10,7 @@ import {
 } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
-import { getEvetnArgs } from '../helpers/get-events-args'
+import { getEventArgs } from '../helpers/get-events-args'
 import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
 import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
 import { Attestation } from '../models/attestation.model'
@@ -68,7 +68,7 @@ describe('Seal', function () {
 
 		await registerSchemaorganizationTx.wait()
 
-		const { '0': schemaorganizationId } = await getEvetnArgs(
+		const { '0': schemaorganizationId } = await getEventArgs(
 			registerSchemaorganizationTx.hash,
 			sp,
 			'SchemaRegistered',
@@ -95,7 +95,7 @@ describe('Seal', function () {
 
 		await registerTx.wait()
 
-		const { '0': schemaCourseId } = await getEvetnArgs(
+		const { '0': schemaCourseId } = await getEventArgs(
 			registerTx.hash,
 			sp,
 			'SchemaRegistered',
@@ -341,7 +341,7 @@ describe('Seal', function () {
 			await attestTx.wait()
 
 			const [attestationId, id, newNonce, name, credits, owner, anchor] =
-				await getEvetnArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
+				await getEventArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
 
 			profileId = id
 			attestationArray[0] = schemaCourseId
@@ -439,7 +439,7 @@ describe('Seal', function () {
 			await attestCourseTx.wait()
 
 			const [id, oldProfileId, attestationId, address, credits] =
-				await getEvetnArgs(attestCourseTx.hash, seal, 'CourseCreated', 'all')
+				await getEventArgs(attestCourseTx.hash, seal, 'CourseCreated', 'all')
 
 			const course: Course = {
 				profileId: oldProfileId,
@@ -458,7 +458,7 @@ describe('Seal', function () {
 
 		describe('Reduce credits', async () => {
 			it('Should reduce the credits of the profile', async () => {
-				const [, eventProfileId, , , eventCredits] = await getEvetnArgs(
+				const [, eventProfileId, , , eventCredits] = await getEventArgs(
 					attestCourseTx.hash,
 					seal,
 					'CourseCreated',
@@ -482,7 +482,7 @@ describe('Seal', function () {
 			})
 
 			it('emit an event', async () => {
-				const [, , , , eventCredits] = await getEvetnArgs(
+				const [, , , , eventCredits] = await getEventArgs(
 					attestCourseTx.hash,
 					seal,
 					'CourseCreated',
@@ -515,7 +515,7 @@ describe('Seal', function () {
 				})
 
 			const [courseId, oldProfileId, attestationId, address, credits] =
-				await getEvetnArgs(attestTx.hash, seal, 'CourseCreated', 'all')
+				await getEventArgs(attestTx.hash, seal, 'CourseCreated', 'all')
 
 			await expect(attestTx)
 				.to.emit(seal, 'CourseCreated')

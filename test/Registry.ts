@@ -7,7 +7,7 @@ import hre, { ethers, upgrades } from 'hardhat'
 import { CREATE_PROFILE_TYPES } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
-import { getEvetnArgs } from '../helpers/get-events-args'
+import { getEventArgs } from '../helpers/get-events-args'
 import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
 import { Attestation } from '../models/attestation.model'
 import { Profile } from '../models/profile.model'
@@ -48,7 +48,7 @@ describe('Registry', function () {
 
 		await registerTx.wait()
 
-		const { '0': schemaId } = await getEvetnArgs(
+		const { '0': schemaId } = await getEventArgs(
 			registerTx.hash,
 			sp,
 			'SchemaRegistered',
@@ -428,7 +428,7 @@ describe('Registry', function () {
 			expect(attestTx).emit(registry, 'ProfileCreated')
 
 			const [attestationId, id, nonce, name, credits, owner, anchor] =
-				await getEvetnArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
+				await getEventArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
 
 			const profile: Profile = {
 				attestationId,

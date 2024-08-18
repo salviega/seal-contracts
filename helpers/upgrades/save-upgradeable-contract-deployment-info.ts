@@ -8,7 +8,6 @@ export async function saveUpgradeableContractDeploymentInfo(
 ): Promise<void> {
 	const address: string = await proxy.getAddress()
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const abi: any = JSON.parse(proxy.interface.formatJson())
 	const bytecode: string | null = await proxy.getDeployedCode()
 
@@ -19,19 +18,20 @@ export async function saveUpgradeableContractDeploymentInfo(
 		throw new Error('No deployment transaction found')
 	}
 
-	const blockNumber: number | null = deploymentTransaction.blockNumber
+	// Esperar a que la transacción sea minada si no lo ha sido
+	const minedTransaction = await deploymentTransaction.wait()
 
-	if (!blockNumber) {
-		throw new Error('No block number found')
+	if (!minedTransaction || !minedTransaction.blockNumber) {
+		throw new Error('No block number found. Ensure the transaction is mined.')
 	}
 
+	const blockNumber: number = minedTransaction.blockNumber
 	const transactionHash: string = deploymentTransaction.hash
 	const deployer: string = deploymentTransaction.from
 
 	const network: Network = await deploymentTransaction.provider.getNetwork()
 	const networkName: string = network.name
-
-	const chainId: string = Number(deploymentTransaction.chainId).toString()
+	const chainId: string = network.chainId.toString()
 
 	const deploymentInfo: string = JSON.stringify(
 		{

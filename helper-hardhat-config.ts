@@ -15,7 +15,20 @@ export const networkConfig: networkConfigInfo = {
 	},
 	arbitrumSepolia: {
 		blockConfirmations: 3
+	},
+	celoAlfajores: {
+		blockConfirmations: 3
+	},
+	celoMainnet: {
+		blockConfirmations: 3
 	}
 }
 
-export const developmentChains = ['hardhat', 'localhost']
+export const developmentChains = [
+	'hardhat',
+	'localhost',
+	'arbitrumOne',
+	'arbitrumSepolia',
+	'celoAlfajores',
+	'celoMainnet'
+]
