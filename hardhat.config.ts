@@ -1,7 +1,6 @@
 import dotenv from 'dotenv'
-import fs from 'fs'
-import { HardhatUserConfig } from 'hardhat/config'
-import path from 'path'
+
+import { ensureEnvVar } from './helpers/ensure-env-variables'
 
 import '@nomicfoundation/hardhat-ethers'
 import '@nomicfoundation/hardhat-toolbox'
@@ -11,40 +10,28 @@ import 'hardhat-deploy'
 import 'hardhat-gas-reporter'
 import 'solidity-coverage'
 
-const envFile =
-	process.env.NODE_ENV === 'production' ? '.env.production' : '.env.testnet'
-
-if (fs.existsSync(path.resolve(__dirname, envFile))) {
-	dotenv.config({ path: envFile })
-} else {
-	dotenv.config()
-}
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` })
 
 const {
-	ALCHEMY_ARBITRUM_HTTPS,
-	ARBISCAN_API_KEY,
+	RPC_HTTPS,
+	SCAN_API_KEY,
 	COINMARKETCAP_API_KEY,
 	REPORT_GAS,
 	WALLET_PRIVATE_KEY
 } = process.env
 
-if (!ALCHEMY_ARBITRUM_HTTPS) {
-	throw new Error('ALCHEMY_ARBITRUM_HTTPS is not set')
-}
+const url = ensureEnvVar(RPC_HTTPS, 'RPC_HTTPS')
 
-if (!ARBISCAN_API_KEY) {
-	throw new Error('ARBISCAN_API_KEY is not set')
-}
+const apiKey = ensureEnvVar(SCAN_API_KEY, 'SCAN_API_KEY')
 
-if (!COINMARKETCAP_API_KEY) {
-	throw new Error('COINMARKETCAP_API_KEY is not set')
-}
+const coinmarketcap = ensureEnvVar(
+	COINMARKETCAP_API_KEY,
+	'COINMARKETCAP_API_KEY'
+)
 
-if (!WALLET_PRIVATE_KEY) {
-	throw new Error('WALLET_PRIVATE_KEY is not set')
-}
+const walletPrivateKey = ensureEnvVar(WALLET_PRIVATE_KEY, 'WALLET_PRIVATE_KEY')
 
-const ACCOUNTS = [WALLET_PRIVATE_KEY]
+const accounts = [walletPrivateKey]
 
 const SOLC_SETTING = {
 	optimizer: {
@@ -54,7 +41,7 @@ const SOLC_SETTING = {
 }
 
 const defaultNetwork = 'hardhat'
-const config: HardhatUserConfig = {
+const config = {
 	defaultNetwork,
 	networks: {
 		hardhat: {
@@ -68,17 +55,45 @@ const config: HardhatUserConfig = {
 		},
 		arbitrumOne: {
 			chainId: 42161,
-			accounts: ACCOUNTS,
-			url: ALCHEMY_ARBITRUM_HTTPS
+			accounts,
+			url
 		},
 		arbitrumSepolia: {
 			chainId: 421614,
-			accounts: ACCOUNTS,
-			url: ALCHEMY_ARBITRUM_HTTPS
+			accounts,
+			url
+		},
+		celoAlfajores: {
+			chainId: 44787,
+			accounts,
+			url
+		},
+		celoMainnet: {
+			chainId: 42220,
+			accounts,
+			url
 		}
 	},
 	etherscan: {
-		apiKey: ARBISCAN_API_KEY
+		apiKey,
+		customChains: [
+			{
+				network: 'celoAlfajores',
+				chainId: 44787,
+				urls: {
+					apiURL: 'https://api-alfajores.celoscan.io/api',
+					browserURL: 'https://alfajores.celoscan.io'
+				}
+			},
+			{
+				network: 'celoMainnet',
+				chainId: 42220,
+				urls: {
+					apiURL: 'https://api.celoscan.io/api',
+					browserURL: 'https://celoscan.io'
+				}
+			}
+		]
 	},
 	sourcify: {
 		enabled: true
@@ -118,7 +133,7 @@ const config: HardhatUserConfig = {
 	},
 	gasReporter: {
 		enabled: !!REPORT_GAS,
-		coinmarketcap: COINMARKETCAP_API_KEY,
+		coinmarketcap,
 		currency: 'USD',
 		L2: 'arbitrum'
 		// outputFile: 'gas-report.txt'
