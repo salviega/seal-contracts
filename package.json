@@ -24,7 +24,7 @@
 		"@openzeppelin/contracts-upgradeable": "^5.0.2",
 		"ethers": "^6.13.2",
 		"dotenv": "^16.4.5",
-		"solady": "^0.0.233"
+		"solady": "^0.0.234"
 	},
 	"devDependencies": {
 		"@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
@@ -39,9 +39,9 @@
 		"@typechain/hardhat": "^9.1.0",
 		"@types/chai": "^4.3.17",
 		"@types/mocha": ">=10.0.7",
-		"@types/node": ">=22.4.0",
-		"@typescript-eslint/eslint-plugin": "^8.1.0",
-		"@typescript-eslint/parser": "^8.1.0",
+		"@types/node": ">=22.4.1",
+		"@typescript-eslint/eslint-plugin": "^8.2.0",
+		"@typescript-eslint/parser": "^8.2.0",
 		"eslint": "8.56.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-config-standard": "^17.1.0",
