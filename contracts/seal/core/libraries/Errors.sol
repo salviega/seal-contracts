@@ -62,7 +62,7 @@ contract Errors {
 	error NOT_ATTESTATION_PROVIDER();
 
 	/// ======================
-	/// ===== ICourse ========
+	/// ===== IActivity ========
 	/// ======================
 
 	/// @notice Thrown when data is already intialized

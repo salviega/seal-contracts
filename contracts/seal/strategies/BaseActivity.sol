@@ -2,18 +2,18 @@
 pragma solidity ^0.8.19;
 
 import 'solady/src/tokens/ERC20.sol';
-import '../core/interfaces/ICourse.sol';
+import '../core/interfaces/IActivity.sol';
 import '../core/libraries/Errors.sol';
 import '../core/libraries/Native.sol';
 import '../core/libraries/Transfer.sol';
 
-abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
+abstract contract BaseActivity is IActivity, Errors, Native, Transfer {
 	/// ==========================
 	/// === Storage Variables ====
 	/// ==========================
 
 	ISeal internal immutable seal;
-	uint256 internal courseId;
+	uint256 internal activityId;
 
 	/// ====================================
 	/// =========== Modifiers ==============
@@ -41,13 +41,13 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	// =========== Initializer ============
 	// ====================================
 
-	function __BaseStrategy_init(uint256 _courseId) internal virtual onlySeal {
+	function __BaseStrategy_init(uint256 _activityId) internal virtual onlySeal {
 		// check if pool ID is not initialized already, if it is, revert
-		if (courseId != 0) revert ALREADY_INITIALIZED();
+		if (activityId != 0) revert ALREADY_INITIALIZED();
 
 		// check if pool ID is valid and not zero (0), if it is, revert
-		if (_courseId == 0) revert INVALID();
-		courseId = _courseId;
+		if (_activityId == 0) revert INVALID();
+		activityId = _activityId;
 	}
 
 	/// =========================
@@ -58,8 +58,8 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 		return seal;
 	}
 
-	function getCourseId() external view override returns (uint256) {
-		return courseId;
+	function getactivityId() external view override returns (uint256) {
+		return activityId;
 	}
 
 	function recoverFunds(address _token, address _recipient) external onlySeal {
@@ -75,7 +75,7 @@ abstract contract BaseCourse is ICourse, Errors, Native, Transfer {
 	/// ====================================
 
 	function _checkOnlyInitialized() internal view {
-		if (courseId == 0) revert NOT_INITIALIZED();
+		if (activityId == 0) revert NOT_INITIALIZED();
 	}
 
 	function _checkOnlySeal() internal view {

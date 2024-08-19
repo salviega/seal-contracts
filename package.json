@@ -17,7 +17,7 @@
 		"deploy:celoMainnet": "NODE_ENV=celoMainnet hardhat deploy --tags all --network celoMainnet",
 		"format": "prettier --write \"./**/*.{js,ts}\"",
 		"lint": "eslint . --fix --ext \"./**/*.{js,ts,sol}\"",
-		"test": "hardhat test"
+		"test": "NODE_ENV=celoAlfajores hardhat test"
 	},
 	"dependencies": {
 		"@openzeppelin/contracts": "^5.0.2",

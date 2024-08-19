@@ -5,12 +5,12 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
-import '../BaseCourse.sol';
+import '../BaseActivity.sol';
 import '../../core/interfaces/ISeal.sol';
 import '../../core/interfaces/IRegistry.sol';
 
-contract Course is
-	BaseCourse,
+contract Activity is
+	BaseActivity,
 	ERC721,
 	ERC721Burnable,
 	ERC721Enumerable,
@@ -30,15 +30,15 @@ contract Course is
 		string memory _name,
 		string memory _symbol,
 		address _seal
-	) BaseCourse(_seal) ERC721(_name, _symbol) {}
+	) BaseActivity(_seal) ERC721(_name, _symbol) {}
 
 	// ====================================
 	// =========== Initializer ============
 	// ====================================
 
-	function initialize(uint256 _courseId) public override onlySeal {
-		__BaseStrategy_init(_courseId);
-		emit Initialized(_courseId);
+	function initialize(uint256 _activityId) public override onlySeal {
+		__BaseStrategy_init(_activityId);
+		emit Initialized(_activityId);
 	}
 
 	//  ====================================

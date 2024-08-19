@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './ICourse.sol';
+import './IActivity.sol';
 import './IRegistry.sol';
 
 interface ISeal {
@@ -9,10 +9,10 @@ interface ISeal {
 	/// ======= Structs ======
 	/// ======================
 
-	struct Course {
+	struct Activity {
 		bytes32 profileId;
 		uint64 attestationId;
-		ICourse course;
+		IActivity activity;
 		uint256 credits;
 	}
 
@@ -20,19 +20,19 @@ interface ISeal {
 	/// ======= Events =======
 	/// ======================
 
-	event CourseCreated(
-		uint256 indexed courseId,
+	event ActivityCreated(
+		uint256 indexed activityId,
 		bytes32 indexed profileId,
 		uint64 indexed attestationId,
-		address course,
+		address activity,
 		uint256 credits
 	);
 
-	event CourseApproved(address course);
+	event ActivityApproved(address activity);
 
-	event CourseRemoved(address course);
+	event ActivityRemoved(address activity);
 
-	event CourseUpdated(address course);
+	event ActivityUpdated(address activity);
 
 	event RegistryUpdated(address registry);
 
@@ -48,9 +48,9 @@ interface ISeal {
 	/// ==== View Functions =====
 	/// =========================
 
-	function getCourseById(
-		uint256 _courseId
-	) external view returns (Course memory);
+	function getActivityById(
+		uint256 _activityId
+	) external view returns (Activity memory);
 
 	function getRegistry() external view returns (IRegistry);
 
@@ -75,8 +75,8 @@ interface ISeal {
 	// ======= Strategy Functions =========
 	// ====================================
 
-	function recoverFundsOfCourse(
-		uint256 _courseId,
+	function recoverFundsOfActivity(
+		uint256 _activityId,
 		address _token,
 		address _recipient
 	) external;

@@ -135,7 +135,7 @@ const config = {
 		enabled: !!REPORT_GAS,
 		coinmarketcap,
 		currency: 'USD',
-		L2: 'arbitrum'
+		L1: 'celo'
 		// outputFile: 'gas-report.txt'
 	},
 

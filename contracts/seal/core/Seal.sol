@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import 'solady/src/auth/Ownable.sol';
 import 'solady/src/tokens/ERC20.sol';
 import './interfaces/ISeal.sol';
-import './interfaces/ICourse.sol';
+import './interfaces/IActivity.sol';
 import './libraries/Clone.sol';
 import './libraries/Errors.sol';
 import './libraries/Native.sol';
@@ -17,11 +17,11 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	/// =========================
 
 	mapping(address => uint256) private nonces;
-	mapping(uint256 => Course) private courses;
+	mapping(uint256 => Activity) private activities;
 
 	address public strategy;
 	IRegistry public registry;
-	uint256 public courseIdCounter;
+	uint256 public activityIdCounter;
 
 	/// =========================
 	/// ====== Initializer ======
@@ -52,10 +52,10 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	// ==== View Functions =====
 	// =========================
 
-	function getCourseById(
-		uint256 _courseId
-	) external view returns (Course memory) {
-		return courses[_courseId];
+	function getActivityById(
+		uint256 _activityId
+	) external view returns (Activity memory) {
+		return activities[_activityId];
 	}
 
 	function getRegistry() external view returns (IRegistry) {
@@ -101,7 +101,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 
 		if (recipients.length == 0) revert EMPTY_ARRAY();
 
-		Course memory course = _createCourse(
+		Activity memory activity = _createActivity(
 			profileId,
 			_attester,
 			_attestationId,
@@ -113,7 +113,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		for (uint256 i; i < recipients.length; ) {
 			if (recipients[i] == address(0)) revert ZERO_ADDRESS();
 
-			course.course.safeMint(recipients[i], uris[i]);
+			activity.activity.safeMint(recipients[i], uris[i]);
 
 			unchecked {
 				++i;
@@ -125,55 +125,55 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	// ======= Strategy Functions =========
 	// ====================================
 
-	function recoverFundsOfCourse(
-		uint256 _courseId,
+	function recoverFundsOfActivity(
+		uint256 _activityId,
 		address _token,
 		address _recipient
 	) external onlyOwner {
-		courses[_courseId].course.recoverFunds(_token, _recipient);
+		activities[_activityId].activity.recoverFunds(_token, _recipient);
 	}
 
 	/// ====================================
 	/// ======= Internal Functions =========
 	/// ====================================
 
-	function _createCourse(
+	function _createActivity(
 		bytes32 _profileId,
 		address _attester,
 		uint64 _attestationId,
 		uint256 _credits
-	) internal returns (Course memory course) {
+	) internal returns (Activity memory activity) {
 		if (!registry.isOwnerOrManagerOfProfile(_profileId, _attester))
 			revert UNAUTHORIZED();
 
-		uint256 courseId = ++courseIdCounter;
+		uint256 activityId = ++activityIdCounter;
 
-		ICourse newCourse = ICourse(
+		IActivity newActivity = IActivity(
 			Clone.createClone(strategy, nonces[_attester]++)
 		);
 
-		course = Course({
+		activity = Activity({
 			profileId: _profileId,
 			attestationId: _attestationId,
-			course: newCourse,
+			activity: newActivity,
 			credits: _credits
 		});
 
-		courses[courseId] = course;
+		activities[activityId] = activity;
 
-		newCourse.initialize(courseId);
+		newActivity.initialize(activityId);
 
 		if (
-			newCourse.getCourseId() != courseId ||
-			address(newCourse.getSeal()) != address(this)
+			newActivity.getactivityId() != activityId ||
+			address(newActivity.getSeal()) != address(this)
 		) revert MISMATCH();
 
-		emit CourseCreated(
-			courseId,
-			course.profileId,
-			course.attestationId,
-			address(course.course),
-			course.credits
+		emit ActivityCreated(
+			activityId,
+			activity.profileId,
+			activity.attestationId,
+			address(activity.activity),
+			activity.credits
 		);
 	}
 
@@ -188,7 +188,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		if (_strategy == address(0)) revert ZERO_ADDRESS();
 
 		strategy = _strategy;
-		emit CourseUpdated(_strategy);
+		emit ActivityUpdated(_strategy);
 	}
 
 	receive() external payable {}
