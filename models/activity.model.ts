@@ -1,10 +1,10 @@
 import { BytesLike } from 'ethers'
 
-export interface Course {
+export interface Activity {
 	id?: number
 	profileId: BytesLike
 	attestationId?: number
-	course: string
+	activity: string
 	credits?: number
 	manager?: string
 }

@@ -5,16 +5,16 @@ import { AbiCoder, BytesLike, Contract, ZeroAddress } from 'ethers'
 import hre, { ethers, upgrades } from 'hardhat'
 
 import {
-	CREATE_COURSE_TYPES,
+	CREATE_ACTIVITY_TYPES,
 	CREATE_PROFILE_TYPES
 } from '../constants/constants'
 import { DataLocation } from '../constants/enums'
 import { executeMulticall } from '../helpers/execute-multicall'
 import { getEventArgs } from '../helpers/get-events-args'
-import { courseContractToCourse } from '../mappings/course-contract-to-contract.mapping'
+import { activityContractToActivity } from '../mappings/activity-contract-to-contract.mapping'
 import { profileContractToProfile } from '../mappings/profile-contract-to-profile.mapping'
+import { Activity } from '../models/activity.model'
 import { Attestation } from '../models/attestation.model'
-import { Course } from '../models/course.model'
 import { Profile } from '../models/profile.model'
 import { Schema } from '../models/schema.model'
 
@@ -40,12 +40,12 @@ describe('Seal', function () {
 			await registry.getAddress()
 		])
 
-		const Course = await ethers.getContractFactory('Course')
-		const course = await Course.deploy('', '', await seal.getAddress())
+		const Activity = await ethers.getContractFactory('Activity')
+		const activity = await Activity.deploy('', '', await seal.getAddress())
 
 		const updateStrategyTx = await seal
 			.connect(deployer)
-			.updateStrategy(await course.getAddress())
+			.updateStrategy(await activity.getAddress())
 
 		await updateStrategyTx.wait()
 
@@ -62,14 +62,14 @@ describe('Seal', function () {
 		const organizationSchemaArray: unknown[] = Object.values(organizationSchema)
 		const delegateSignature: BytesLike = '0x'
 
-		const registerSchemaorganizationTx = await sp
+		const registerSchemaOrganizationTx = await sp
 			.connect(deployer)
 			.register(organizationSchemaArray, delegateSignature)
 
-		await registerSchemaorganizationTx.wait()
+		await registerSchemaOrganizationTx.wait()
 
 		const { '0': schemaorganizationId } = await getEventArgs(
-			registerSchemaorganizationTx.hash,
+			registerSchemaOrganizationTx.hash,
 			sp,
 			'SchemaRegistered',
 			[0]
@@ -95,41 +95,41 @@ describe('Seal', function () {
 
 		await registerTx.wait()
 
-		const { '0': schemaCourseId } = await getEventArgs(
+		const { '0': schemaactivityId } = await getEventArgs(
 			registerTx.hash,
 			sp,
 			'SchemaRegistered',
 			[0]
 		)
 
-		const schemaCourseIdNumber: number = Number(schemaCourseId)
+		const schemaactivityIdNumber: number = Number(schemaactivityId)
 
 		return {
 			sp,
 			registry,
 			seal,
-			course,
+			activity,
 			deployer,
 			educateth,
 			julio,
 			oscar,
 			santiago,
 			schemaOrganizationId: schemaOrganizationIdNumber,
-			schemaCourseId: schemaCourseIdNumber
+			schemaactivityId: schemaactivityIdNumber
 		}
 	}
 
 	let sp: Contract,
 		registry: Contract,
 		seal: Contract,
-		course: Contract,
+		activity: Contract,
 		deployer: HardhatEthersSigner,
 		educateth: HardhatEthersSigner,
 		julio: HardhatEthersSigner,
 		oscar: HardhatEthersSigner,
 		santiago: HardhatEthersSigner,
 		schemaOrganizationId: number,
-		schemaCourseId: number
+		schemaactivityId: number
 
 	describe('Deployment', async () => {
 		before(async () => {
@@ -209,7 +209,7 @@ describe('Seal', function () {
 			sp = fixture.sp
 			registry = fixture.registry
 			seal = fixture.seal
-			course = fixture.course
+			activity = fixture.activity
 			deployer = fixture.deployer
 			educateth = fixture.educateth
 		})
@@ -227,14 +227,14 @@ describe('Seal', function () {
 
 		it('Should update the strategy', async () => {
 			const updateStrategyTx = await seal.updateStrategy(
-				await course.getAddress()
+				await activity.getAddress()
 			)
 
 			await updateStrategyTx.wait()
 
 			const updatedStrategyAddress: string = await seal.getStrategy()
 
-			expect(await course.getAddress()).to.equal(updatedStrategyAddress)
+			expect(await activity.getAddress()).to.equal(updatedStrategyAddress)
 		})
 
 		it('Should emit an event', async () => {
@@ -243,12 +243,12 @@ describe('Seal', function () {
 			)
 
 			await expect(updateStrategyTx)
-				.to.emit(seal, 'CourseUpdated')
+				.to.emit(seal, 'ActivityUpdated')
 				.withArgs(await registry.getAddress())
 		})
 	})
 
-	describe('Create Course', async () => {
+	describe('Create Activity', async () => {
 		let attestationArray: any[], profileArray: unknown[]
 
 		const resolverFeesETH: bigint = ethers.parseEther('0')
@@ -256,22 +256,22 @@ describe('Seal', function () {
 		const delegateSignature: BytesLike = '0x'
 
 		let profileId: BytesLike
-		let courseId: number
-		let attestCourseTx: any
+		let activityId: number
+		let attestActivityTx: any
 
 		before(async () => {
 			const fixture = await loadFixture(deployFixture)
 			sp = fixture.sp
 			registry = fixture.registry
 			seal = fixture.seal
-			course = fixture.course
+			activity = fixture.activity
 			deployer = fixture.deployer
 			educateth = fixture.educateth
 			julio = fixture.julio
 			oscar = fixture.oscar
 			santiago = fixture.santiago
 			schemaOrganizationId = fixture.schemaOrganizationId
-			schemaCourseId = fixture.schemaCourseId
+			schemaactivityId = fixture.schemaactivityId
 
 			await executeMulticall(registry, deployer, [
 				{ name: 'authorizeProfileCreation', params: [educateth.address, true] },
@@ -344,10 +344,10 @@ describe('Seal', function () {
 				await getEventArgs(attestTx.hash, registry, 'ProfileCreated', 'all')
 
 			profileId = id
-			attestationArray[0] = schemaCourseId
+			attestationArray[0] = schemaactivityId
 		})
 
-		it('Should revert if account tries to create a course', async () => {
+		it('Should revert if account tries to create a Activity', async () => {
 			await expect(
 				registry
 					.connect(santiago)
@@ -357,8 +357,8 @@ describe('Seal', function () {
 				.withArgs()
 		})
 
-		it('Should revert if try to create a course with empty recipients', async () => {
-			const extraData: BytesLike = abiCoder.encode(CREATE_COURSE_TYPES, [
+		it('Should revert if try to create a activity with empty recipients', async () => {
+			const extraData: BytesLike = abiCoder.encode(CREATE_ACTIVITY_TYPES, [
 				profileId,
 				[],
 				[]
@@ -375,8 +375,8 @@ describe('Seal', function () {
 			).to.be.revertedWithCustomError(seal, 'EMPTY_ARRAY')
 		})
 
-		it('Should revert if try to create a course uris and recipients mismatch', async () => {
-			const extraData: BytesLike = abiCoder.encode(CREATE_COURSE_TYPES, [
+		it('Should revert if try to create a activity uris and recipients mismatch', async () => {
+			const extraData: BytesLike = abiCoder.encode(CREATE_ACTIVITY_TYPES, [
 				profileId,
 				[julio.address, oscar.address],
 				[]
@@ -393,8 +393,8 @@ describe('Seal', function () {
 			).to.be.revertedWithCustomError(seal, 'MISMATCH')
 		})
 
-		it('Should revert to create a course with course zero address', async () => {
-			const extraData: BytesLike = abiCoder.encode(CREATE_COURSE_TYPES, [
+		it('Should revert to create a activity with activity zero address', async () => {
+			const extraData: BytesLike = abiCoder.encode(CREATE_ACTIVITY_TYPES, [
 				profileId,
 				[ZeroAddress, ZeroAddress],
 				['zero', 'zero']
@@ -411,7 +411,7 @@ describe('Seal', function () {
 			).to.be.revertedWithCustomError(seal, 'ZERO_ADDRESS')
 		})
 
-		it('Should create a course', async () => {
+		it('Should create a Activity', async () => {
 			const wallets = []
 			for (let i = 0; i <= 50; i++) {
 				wallets.push(ethers.Wallet.createRandom().address)
@@ -422,13 +422,13 @@ describe('Seal', function () {
 				uris.push(i.toString())
 			}
 
-			const extraData: BytesLike = abiCoder.encode(CREATE_COURSE_TYPES, [
+			const extraData: BytesLike = abiCoder.encode(CREATE_ACTIVITY_TYPES, [
 				profileId,
 				wallets,
 				uris
 			])
 
-			attestCourseTx = await sp
+			attestActivityTx = await sp
 				.connect(educateth)
 				[
 					'attest((uint64,uint64,uint64,uint64,address,uint64,uint8,bool,bytes[],bytes),uint256,string,bytes,bytes)'
@@ -436,32 +436,38 @@ describe('Seal', function () {
 					value: resolverFeesETH
 				})
 
-			await attestCourseTx.wait()
+			await attestActivityTx.wait()
 
 			const [id, oldProfileId, attestationId, address, credits] =
-				await getEventArgs(attestCourseTx.hash, seal, 'CourseCreated', 'all')
+				await getEventArgs(
+					attestActivityTx.hash,
+					seal,
+					'ActivityCreated',
+					'all'
+				)
 
-			const course: Course = {
+			const activity: Activity = {
 				profileId: oldProfileId,
 				attestationId,
-				course: address,
+				activity: address,
 				credits
 			}
 
-			const courseContract = await seal.connect(deployer).getCourseById(id)
-			const mappedCourse: Course = courseContractToCourse(courseContract)
+			const activityContract = await seal.connect(deployer).getActivityById(id)
+			const mappedActivity: Activity =
+				activityContractToActivity(activityContract)
 
-			courseId = id
+			activityId = id
 
-			expect(course).to.deep.equal(mappedCourse)
+			expect(activity).to.deep.equal(mappedActivity)
 		})
 
 		describe('Reduce credits', async () => {
 			it('Should reduce the credits of the profile', async () => {
 				const [, eventProfileId, , , eventCredits] = await getEventArgs(
-					attestCourseTx.hash,
+					attestActivityTx.hash,
 					seal,
-					'CourseCreated',
+					'ActivityCreated',
 					'all'
 				)
 
@@ -483,9 +489,9 @@ describe('Seal', function () {
 
 			it('emit an event', async () => {
 				const [, , , , eventCredits] = await getEventArgs(
-					attestCourseTx.hash,
+					attestActivityTx.hash,
 					seal,
-					'CourseCreated',
+					'ActivityCreated',
 					'all'
 				)
 
@@ -500,7 +506,7 @@ describe('Seal', function () {
 		})
 
 		it('Should emit an event', async () => {
-			const extraData: BytesLike = abiCoder.encode(CREATE_COURSE_TYPES, [
+			const extraData: BytesLike = abiCoder.encode(CREATE_ACTIVITY_TYPES, [
 				profileId,
 				[julio.address, oscar.address],
 				['zero', 'zero']
@@ -514,59 +520,65 @@ describe('Seal', function () {
 					value: resolverFeesETH
 				})
 
-			const [courseId, oldProfileId, attestationId, address, credits] =
-				await getEventArgs(attestTx.hash, seal, 'CourseCreated', 'all')
+			const [activityId, oldProfileId, attestationId, address, credits] =
+				await getEventArgs(attestTx.hash, seal, 'ActivityCreated', 'all')
 
 			await expect(attestTx)
-				.to.emit(seal, 'CourseCreated')
-				.withArgs(courseId, oldProfileId, attestationId, address, credits)
+				.to.emit(seal, 'ActivityCreated')
+				.withArgs(activityId, oldProfileId, attestationId, address, credits)
 		})
 
 		describe('Funds', async () => {
 			let native: string
-			let course: Course
-			let courseDeployed: Contract
+			let activity: Activity
+			let activityDeployed: Contract
 
 			before(async () => {
 				native = await seal.NATIVE()
 
-				const courseContract = await seal
+				const activityContract = await seal
 					.connect(deployer)
-					.getCourseById(courseId)
-				const mappedCourse: Course = courseContractToCourse(courseContract)
+					.getActivityById(activityId)
+				const mappedActivity: Activity =
+					activityContractToActivity(activityContract)
 
-				course = mappedCourse
-				course.id = courseId
+				activity = mappedActivity
+				activity.id = activityId
 
 				await santiago.sendTransaction({
-					to: mappedCourse.course,
+					to: mappedActivity.activity,
 					value: ethers.parseEther('0.05')
 				})
 
-				courseDeployed = await hre.ethers.getContractAt('Course', course.course)
+				activityDeployed = await hre.ethers.getContractAt(
+					'Activity',
+					activity.activity
+				)
 			})
 
 			it('Should revert if an account tries to withdraw funds', async () => {
 				await expect(
 					seal
 						.connect(santiago)
-						.recoverFundsOfCourse(course.id, native, santiago.address)
+						.recoverFundsOfActivity(activity.id, native, santiago.address)
 				).to.be.reverted
 			})
 
-			it('Should revert if an account tries to withdraw funds directly of the course', async () => {
+			it('Should revert if an account tries to withdraw funds directly of the Activity', async () => {
 				await expect(
-					courseDeployed.connect(santiago).recoverFunds(native, course.course)
-				).to.be.revertedWithCustomError(courseDeployed, 'UNAUTHORIZED')
+					activityDeployed
+						.connect(santiago)
+						.recoverFunds(native, activity.activity)
+				).to.be.revertedWithCustomError(activityDeployed, 'UNAUTHORIZED')
 			})
 
 			it('Should recover funds', async () => {
 				await expect(
 					seal
 						.connect(deployer)
-						.recoverFundsOfCourse(course.id, native, santiago.address)
+						.recoverFundsOfActivity(activity.id, native, santiago.address)
 				).to.changeEtherBalances(
-					[santiago, courseDeployed],
+					[santiago, activityDeployed],
 					[
 						ethers.parseUnits('0.05', 'ether'),
 						ethers.parseUnits('-0.05', 'ether')
