@@ -16,7 +16,7 @@ const deployRegistry: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
 	const { getNamedAccounts, deployments, network } = hre
-	const { log, get, save } = deployments
+	const { log, save } = deployments
 	const { deployer } = await getNamedAccounts()
 
 	// const sp: Deployment = await get('SP')

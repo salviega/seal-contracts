@@ -10,7 +10,7 @@ import {
 import { developmentChains, networkConfig } from '../helper-hardhat-config'
 import { verify } from '../helpers/verify'
 
-const deployCourse: DeployFunction = async function (
+const deployActivity: DeployFunction = async function (
 	hre: HardhatRuntimeEnvironment
 ) {
 	const { getNamedAccounts, deployments, network, ethers } = hre
@@ -24,9 +24,9 @@ const deployCourse: DeployFunction = async function (
 	const args: any[] = ['xxx', 'xxx', sealDeployment.address]
 
 	log('-----------------------------------')
-	log('Deploying Course...')
+	log('Deploying Activity...')
 
-	const courseDeployment: DeployResult = await deploy('Course', {
+	const activityDeployment: DeployResult = await deploy('Activity', {
 		from: deployer,
 		args,
 		log: true,
@@ -34,7 +34,7 @@ const deployCourse: DeployFunction = async function (
 	})
 
 	if (!developmentChains.includes(network.name)) {
-		await verify(courseDeployment.address, args)
+		await verify(activityDeployment.address, args)
 	}
 
 	const seal: Contract = await ethers.getContractAt(
@@ -43,9 +43,9 @@ const deployCourse: DeployFunction = async function (
 		deployerSigner
 	)
 
-	log('Adding Course to Seal...')
-	await seal.updateStrategy(courseDeployment.address)
+	log('Adding Activity to Seal...')
+	await seal.updateStrategy(activityDeployment.address)
 }
 
-deployCourse.tags = ['all', 'Course']
-export default deployCourse
+deployActivity.tags = ['all', 'Activity']
+export default deployActivity
