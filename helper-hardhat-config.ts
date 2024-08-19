@@ -25,8 +25,6 @@ export const networkConfig: networkConfigInfo = {
 }
 
 export const developmentChains = [
-	'hardhat',
-	'localhost',
 	'arbitrumOne',
 	'arbitrumSepolia',
 	'celoAlfajores',

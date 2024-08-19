@@ -53,7 +53,7 @@ const deployRegistry: DeployFunction = async function (
 	const proxyAdmin: string = await getProxyAdmin(proxyAddress)
 	log(`Registry proxy admin: ${proxyAdmin}`)
 
-	if (!developmentChains.includes(network.name)) {
+	if (developmentChains.includes(network.name)) {
 		await verify(proxyAddress, [])
 	}
 

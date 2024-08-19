@@ -33,7 +33,7 @@ const deployActivity: DeployFunction = async function (
 		waitConfirmations: networkConfig[network.name].blockConfirmations || 1
 	})
 
-	if (!developmentChains.includes(network.name)) {
+	if (developmentChains.includes(network.name)) {
 		await verify(activityDeployment.address, args)
 	}
 

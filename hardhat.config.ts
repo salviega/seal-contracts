@@ -1,4 +1,6 @@
 import dotenv from 'dotenv'
+import { HardhatUserConfig } from 'hardhat/config'
+import { SolcUserConfig } from 'hardhat/types'
 
 import { ensureEnvVar } from './helpers/ensure-env-variables'
 
@@ -6,9 +8,12 @@ import '@nomicfoundation/hardhat-ethers'
 import '@nomicfoundation/hardhat-toolbox'
 import '@nomicfoundation/hardhat-verify'
 import '@openzeppelin/hardhat-upgrades'
+import '@typechain/hardhat'
 import 'hardhat-deploy'
 import 'hardhat-gas-reporter'
 import 'solidity-coverage'
+
+// Load environment variables
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` })
 
@@ -20,28 +25,45 @@ const {
 	WALLET_PRIVATE_KEY
 } = process.env
 
-const url = ensureEnvVar(RPC_HTTPS, 'RPC_HTTPS')
+// Ensure environment variables
 
-const apiKey = ensureEnvVar(SCAN_API_KEY, 'SCAN_API_KEY')
+const url: string = ensureEnvVar(RPC_HTTPS, 'RPC_HTTPS')
 
-const coinmarketcap = ensureEnvVar(
+const apiKey: string = ensureEnvVar(SCAN_API_KEY, 'SCAN_API_KEY')
+
+const coinmarketcap: string = ensureEnvVar(
 	COINMARKETCAP_API_KEY,
 	'COINMARKETCAP_API_KEY'
 )
 
-const walletPrivateKey = ensureEnvVar(WALLET_PRIVATE_KEY, 'WALLET_PRIVATE_KEY')
+const walletPrivateKey: string = ensureEnvVar(
+	WALLET_PRIVATE_KEY,
+	'WALLET_PRIVATE_KEY'
+)
 
-const accounts = [walletPrivateKey]
+// Set up accounts
 
-const SOLC_SETTING = {
-	optimizer: {
-		enabled: true,
-		runs: 200
+const accounts: string[] = [walletPrivateKey]
+
+// Set up Solidity compiler
+
+const solcUserConfig = (version: string): SolcUserConfig => {
+	return {
+		version,
+		settings: {
+			optimizer: {
+				enabled: true,
+				runs: 200
+			}
+		}
 	}
 }
 
-const defaultNetwork = 'hardhat'
-const config = {
+// Set up Hardhat config
+
+const defaultNetwork: string = 'hardhat'
+
+const config: HardhatUserConfig = {
 	defaultNetwork,
 	networks: {
 		hardhat: {
@@ -105,40 +127,25 @@ const config = {
 	},
 	solidity: {
 		compilers: [
-			{
-				version: '0.8.24',
-				settings: SOLC_SETTING
-			},
-			{
-				version: '0.8.23',
-				settings: SOLC_SETTING
-			},
-			{
-				version: '0.8.22',
-				settings: SOLC_SETTING
-			},
-			{
-				version: '0.8.21',
-				settings: SOLC_SETTING
-			},
-			{
-				version: '0.8.20',
-				settings: SOLC_SETTING
-			},
-			{
-				version: '0.8.19',
-				settings: SOLC_SETTING
-			}
+			solcUserConfig('0.8.24'),
+			solcUserConfig('0.8.23'),
+			solcUserConfig('0.8.22'),
+			solcUserConfig('0.8.21'),
+			solcUserConfig('0.8.20'),
+			solcUserConfig('0.8.19')
 		]
 	},
+	typechain: {
+		outDir: 'typechain-types',
+		target: 'ethers-v6'
+	},
 	gasReporter: {
-		enabled: !!REPORT_GAS,
+		enabled: Boolean(REPORT_GAS),
 		coinmarketcap,
 		currency: 'USD',
-		L1: 'celo'
+		L2: 'arbitrum'
 		// outputFile: 'gas-report.txt'
 	},
-
 	mocha: {
 		timeout: 200000
 	}
