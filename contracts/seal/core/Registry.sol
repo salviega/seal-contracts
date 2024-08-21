@@ -165,7 +165,6 @@ contract Registry is
 
 		if (profile.owner == address(0)) revert PROFILE_NOT_FOUND();
 		if (_amount < 1) revert INVALID_AMOUNT();
-
 		profile.credits += _amount;
 
 		emit CreditsAddedToProfile(_profileId, _amount);
