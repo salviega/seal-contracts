@@ -7,9 +7,9 @@
 	"keywords": [],
 	"scripts": {
 		"chain": "hardhat node",
-		"clean": "hardhat clean && rm -rf cache",
-		"compile": "hardhat compile",
-		"coverage": "hardhat coverage",
+		"clean": "NODE_ENV=arbitrumSepolia hardhat clean && rm -rf cache",
+		"compile": "NODE_ENV=arbitrumSepolia hardhat compile",
+		"coverage": "NODE_ENV=arbitrumSepolia hardhat coverage",
 		"deploy": "hardhat deploy --network localhost",
 		"deploy:arbitrumOne": "NODE_ENV=arbitrumOne hardhat deploy --tags all --network arbitrumOne",
 		"deploy:arbitrumSepolia": "NODE_ENV=arbitrumSepolia hardhat deploy --tags all --network arbitrumSepolia",

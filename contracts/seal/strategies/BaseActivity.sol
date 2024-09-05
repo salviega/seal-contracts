@@ -58,7 +58,7 @@ abstract contract BaseActivity is IActivity, Errors, Native, Transfer {
 		return seal;
 	}
 
-	function getactivityId() external view override returns (uint256) {
+	function getActivityId() external view override returns (uint256) {
 		return activityId;
 	}
 
