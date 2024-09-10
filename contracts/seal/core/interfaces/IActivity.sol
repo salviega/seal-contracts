@@ -22,7 +22,7 @@ interface IActivity {
 
 	function getSeal() external view returns (ISeal);
 
-	function getactivityId() external view returns (uint256);
+	function getActivityId() external view returns (uint256);
 
 	/// =================================
 	/// == External / Public Functions ==

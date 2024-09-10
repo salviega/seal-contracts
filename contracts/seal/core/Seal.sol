@@ -19,8 +19,8 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 	mapping(address => uint256) private nonces;
 	mapping(uint256 => Activity) private activities;
 
-	address public strategy;
-	IRegistry public registry;
+	address private strategy;
+	IRegistry private registry;
 	uint256 public activityIdCounter;
 
 	/// =========================
@@ -164,7 +164,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		newActivity.initialize(activityId);
 
 		if (
-			newActivity.getactivityId() != activityId ||
+			newActivity.getActivityId() != activityId ||
 			address(newActivity.getSeal()) != address(this)
 		) revert MISMATCH();
 

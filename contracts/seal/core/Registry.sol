@@ -31,7 +31,7 @@ contract Registry is
 	mapping(address profileOwner => uint256) private credits;
 
 	bytes32 public constant SEAL_OWNER = keccak256('SEAL_OWNER');
-	address public attestationProvider;
+	address private attestationProvider;
 
 	/// =========================
 	/// ====== Initializer ======
