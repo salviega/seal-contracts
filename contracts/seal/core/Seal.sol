@@ -149,7 +149,7 @@ contract Seal is Initializable, Ownable, Errors, Native, Transfer, ISeal {
 		uint256 activityId = ++activityIdCounter;
 
 		IActivity newActivity = IActivity(
-			Clone.createClone(strategy, nonces[_attester]++)
+			Clone.createClone(strategy, _attester, nonces[_attester]++)
 		);
 
 		activity = Activity({
