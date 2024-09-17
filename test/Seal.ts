@@ -528,6 +528,8 @@ describe('Seal', function () {
 				.withArgs(activityId, oldProfileId, attestationId, address, credits)
 		})
 
+		// TODO: Test that other accounts attest activities
+
 		describe('Funds', async () => {
 			let native: string
 			let activity: Activity
