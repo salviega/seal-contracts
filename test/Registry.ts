@@ -135,7 +135,8 @@ describe('Registry', function () {
 
 			await updateAttestationProviderTx.wait()
 
-			const attestationProvider: string = await registry.attestationProvider()
+			const attestationProvider: string =
+				await registry.getAttestationProvider()
 
 			expect(educateth.address).to.equal(attestationProvider)
 		})
