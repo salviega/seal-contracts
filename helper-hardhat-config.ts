@@ -16,6 +16,12 @@ export const networkConfig: networkConfigInfo = {
 	arbitrumSepolia: {
 		blockConfirmations: 3
 	},
+	baseMainnet: {
+		blockConfirmations: 3
+	},
+	baseSepolia: {
+		blockConfirmations: 3
+	},
 	celoAlfajores: {
 		blockConfirmations: 3
 	},
@@ -27,6 +33,8 @@ export const networkConfig: networkConfigInfo = {
 export const developmentChains = [
 	'arbitrumOne',
 	'arbitrumSepolia',
+	'baseMainnet',
+	'baseSepolia',
 	'celoAlfajores',
 	'celoMainnet'
 ]

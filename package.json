@@ -13,6 +13,8 @@
 		"deploy": "hardhat deploy --network localhost",
 		"deploy:arbitrumOne": "NODE_ENV=arbitrumOne hardhat deploy --tags all --network arbitrumOne",
 		"deploy:arbitrumSepolia": "NODE_ENV=arbitrumSepolia hardhat deploy --tags all --network arbitrumSepolia",
+		"deploy:baseMainnet": "NODE_ENV=baseMainnet hardhat deploy --tags all --network baseMainnet",
+		"deploy:baseSepolia": "NODE_ENV=baseSepolia hardhat deploy --tags all --network baseSepolia",
 		"deploy:celoAlfajores": "NODE_ENV=celoAlfajores hardhat deploy --tags all --network celoAlfajores",
 		"deploy:celoMainnet": "NODE_ENV=celoMainnet hardhat deploy --tags all --network celoMainnet",
 		"upgrade:seal:arbitrumSepolia": "NODE_ENV=arbitrumSepolia hardhat deploy --tags upgradeSeal  --network arbitrumSepolia",

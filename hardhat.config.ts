@@ -85,6 +85,16 @@ const config: HardhatUserConfig = {
 			accounts,
 			url
 		},
+		baseMainnet: {
+			chainId: 8453,
+			accounts,
+			url
+		},
+		baseSepolia: {
+			chainId: 84532,
+			accounts,
+			url
+		},
 		celoAlfajores: {
 			chainId: 44787,
 			accounts,
