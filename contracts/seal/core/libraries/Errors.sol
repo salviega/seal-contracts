@@ -18,9 +18,10 @@ contract Errors {
 	/// @notice Thrown when user is not authorized
 	error UNAUTHORIZED();
 
-	/// @notice Thrown when address is the zero address
+	/// @notice Thrown when the address is the zero address
+	error ZERO_ADDRESS();
 
-	// @notice Thrown when amount is zero or less
+	/// @notice Thrown when the amount is zero or less
 	error INVALID_AMOUNT();
 
 	/// @notice Thrown when the address is the same
@@ -28,9 +29,6 @@ contract Errors {
 
 	/// @notice Thrown when the address is this contract address
 	error SAME_CONTRACT();
-
-	/// @notice Thrown when address is the zero address
-	error ZERO_ADDRESS();
 
 	/// ======================
 	/// ====== Registry ======
@@ -48,8 +46,8 @@ contract Errors {
 	/// @dev Thrown when the 'msg.sender' is not the pending owner on ownership transfer
 	error NOT_PENDING_OWNER();
 
-	/// @dev Thrown when the 'msg.sender' has not have credits
-	error NOT_HAVE_CEDRITS();
+	/// @dev Thrown when the 'msg.sender' does not have enough credits
+	error NOT_HAVE_CREDITS();
 
 	/// @dev Thrown if the anchor creation fails
 	error ANCHOR_ERROR();
@@ -62,19 +60,19 @@ contract Errors {
 	error NOT_ATTESTATION_PROVIDER();
 
 	/// ======================
-	/// ===== IActivity ========
+	/// ===== IActivity ======
 	/// ======================
 
-	/// @notice Thrown when data is already intialized
+	/// @notice Thrown when data is already initialized
 	error ALREADY_INITIALIZED();
 
 	/// @notice Thrown when data is yet to be initialized
 	error NOT_INITIALIZED();
 
-	/// @notice Thrown when the sender is not authorized
+	/// @notice Thrown when the sender is already authorized
 	error ALREADY_AUTHORIZED();
 
-	/// @notice Thrown when the address cannot mint.
+	/// @notice Thrown when the address cannot mint
 	error CANNOT_MINT();
 
 	/// @notice Thrown when the profile has insufficient credits

@@ -317,7 +317,7 @@ contract Registry is
 
 		if (_owner == address(0)) revert ZERO_ADDRESS();
 
-		if (credits[_owner] < 1) revert NOT_HAVE_CEDRITS();
+		if (credits[_owner] < 1) revert INSUFFICIENT_CREDITS();
 
 		uint256 ownerCredits = credits[_owner];
 
